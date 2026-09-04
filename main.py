@@ -138,15 +138,15 @@ print(
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # 👑 OWNER / LOGGING / IMPORTANT CHANNELS
-OWNER_ID = int(os.getenv("OWNER_ID", "1544404824076853258"))          # 👑 Bot owner ID
-LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "1544405575314440342"))  # 🧑‍💼 Legacy / Apply log channel
-GENERAL_LOG_CHANNEL_ID = int(os.getenv("GENERAL_LOG_CHANNEL_ID", "0"))    # 🧾 General server audit log
+OWNER_ID = int(os.getenv("OWNER_ID", "1543760628093558794"))          # 👑 Bot owner ID
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "1543761144060059648"))  # 🧑‍💼 Legacy / Apply log channel
+GENERAL_LOG_CHANNEL_ID = int(os.getenv("GENERAL_LOG_CHANNEL_ID", "1543763368655978591"))    # 🧾 General server audit log
 APPLY_LOG_CHANNEL_ID = int(os.getenv("APPLY_LOG_CHANNEL_ID", str(LOG_CHANNEL_ID)))  # 🧑‍💼 Apply/application log
-JAIL_ROLE_ID = int(os.getenv("JAIL_ROLE_ID", "0"))                  # ⛓️ Jail role
-PROTECTED_ROLE_ID = int(os.getenv("PROTECTED_ROLE_ID", "0"))        # 🛡️ Protected role (optional)
+JAIL_ROLE_ID = int(os.getenv("JAIL_ROLE_ID", "1543760861137473536"))                  # ⛓️ Jail role
+PROTECTED_ROLE_ID = int(os.getenv("PROTECTED_ROLE_ID", "1543760632988307597"))        # 🛡️ Protected role (optional)
 WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", "0"))      # 👋 Welcome channel; 0 = off
-LEAVE_CHANNEL_ID = int(os.getenv("LEAVE_CHANNEL_ID", "0"))          # 💔 Leave channel; 0 = off
-TEMP_VC_CHANNEL_ID = int(os.getenv("TEMP_VC_CHANNEL_ID", "1544406112097411072")) # 🔊 Temp VC creator
+LEAVE_CHANNEL_ID = int(os.getenv("LEAVE_CHANNEL_ID", "1543761299769393232"))          # 💔 Leave channel; 0 = off
+TEMP_VC_CHANNEL_ID = int(os.getenv("TEMP_VC_CHANNEL_ID", "1543761017342005413")) # 🔊 Temp VC creator
 TEMP_VC_DEFAULT_LIMIT = int(os.getenv("TEMP_VC_DEFAULT_LIMIT", "0"))  # 👥 0 = unlimited
 TEMP_VC_NAME_PREFIX = os.getenv("TEMP_VC_NAME_PREFIX", "🔊")  # 🔊 Temp room prefix
 
@@ -161,7 +161,7 @@ CHANNEL_IDS = {
     "temp_voice": 1482902422065123338,  # 🔊 Temporary VC
 
     # 🧵 THREAD / TWEET ROOMS — put 0 if you want to use the current channel
-    "tweets": int(os.getenv("TWEETS_CHANNEL_ID", "1544405375632015552")),          # 🐦 Published tweet messages (NOT threads)
+    "tweets": int(os.getenv("TWEETS_CHANNEL_ID", "1543761188557426788")),          # 🐦 Published tweet messages (NOT threads)
     "general_threads": int(os.getenv("GENERAL_THREADS_CHANNEL_ID", "0")),  # 💬 General discussion threads
     "apply_threads": int(os.getenv("APPLY_THREADS_CHANNEL_ID", "0")),      # 🧑‍💼 Application threads (optional)
 }
@@ -169,24 +169,24 @@ CHANNEL_IDS = {
 # 🎭 ROLE IDs — change the numbers only
 ROLE_IDS = {
     # 🚀 Booster roles
-    "booster_nickname": 1523714779032584363,
-    "booster_moon": 1508497154313027675,
-    "booster_soundboard": 1482902118137462896,
-    "booster_pic": 1482902117693001898,
-    "booster_link": 1482902116858331217,
-    "booster_bughunter": 1482902047236952117,
-    "booster_vip": 1482902046653943870,
-    "booster_special": 1482902043558547650,
+    "booster_nickname": 1543760781441499267,
+    "booster_soon": 1543760736659054653,
+    "booster_soundboard": 1543760782393745438,
+    "booster_pic": 1543760780506431658,
+    "booster_link": 1543760779583561848,
+    "booster_bughunter": 1543760735325261866,
+    "booster_vip": 1543760734662565992,
+    "booster_special": 1543760728391950428,
 
     # 💘 Situation roles
-    "heartless": 1482902155219304549,
-    "taken": 1482902157324849333,
-    "single": 1482902156364484661,
+    "heartless": 1543760809820168232,
+    "taken": 1543760811737088101,
+    "single": 1543760812869419098,
 
     # 🧑 Gender roles
-    "female": 1482902134071754832,
-    "male": 1482902134545580123,
-    "trans": 1482902135000000000,
+    "female": 1543760795349946458,
+    "male": 1543760793726750790,
+    "trans": 1545555471564415017,
 
     # 🎮 Games roles
     "valorant": 1482902200000000001,
