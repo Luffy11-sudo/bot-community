@@ -170,7 +170,7 @@ CHANNEL_IDS = {
 ROLE_IDS = {
     # 🚀 Booster roles
     "booster_nickname": 1543760781441499267,
-    "booster_soon": 1543760736659054653,
+    "booster_moon": 1543760736659054653,
     "booster_soundboard": 1543760782393745438,
     "booster_pic": 1543760780506431658,
     "booster_link": 1543760779583561848,
