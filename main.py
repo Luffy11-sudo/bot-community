@@ -10,7 +10,6 @@ from datetime import timedelta, datetime, timezone
 import discord
 import yt_dlp
 
-# Optional at runtime, but required by requirements.txt for the tweet artwork.
 try:
     from PIL import Image, ImageDraw, ImageFont, ImageOps
     PIL_OK = True
@@ -35,7 +34,6 @@ from discord import app_commands, Interaction, ButtonStyle
 from discord.ui import View, Button, Select, Modal, TextInput
 
 
-# Voice dependency diagnostics
 try:
     import nacl
     PYNACL_OK = True
@@ -50,8 +48,6 @@ except Exception as exc:
     DAVEY_OK = False
     print(f"[VOICE DEPENDENCY] davey unavailable: {exc!r}")
 
-# discord.py needs the native Opus library for voice encoding.
-# Railway/Nixpacks may place libopus inside /nix/store instead of /usr/lib.
 OPUS_OK = False
 
 try:
@@ -74,9 +70,6 @@ try:
             "/usr/local/lib/libopus.so.0",
         ]
 
-        # Nixpacks/Nix installs packages under /nix/store.
-        # Find libopus there automatically so the bot does not depend
-        # on one hard-coded Nix store hash/version.
         opus_candidates.extend(glob.glob(
             "/nix/store/*-libopus-*/lib/libopus.so.0"
         ))
@@ -90,7 +83,6 @@ try:
             "/nix/store/*opus*/lib/libopus.so"
         ))
 
-        # Remove duplicates while preserving order.
         seen = set()
         opus_candidates = [
             x for x in opus_candidates
@@ -128,75 +120,151 @@ print(
     f"Opus={OPUS_OK}"
 )
 
-# ==========================================
-# EASY CUSTOMIZATION — CHANGE YOUR SETTINGS HERE
-# ==========================================
-# This is the only section you normally need to edit.
-# IDs = Discord IDs. Emojis = custom emoji code. Images = image/banner URLs.
-# Put 0 for WELCOME/LEAVE if you want those features disabled.
-# ==========================================
+# EASY CUSTOMIZATION
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# 👑 OWNER / LOGGING / IMPORTANT CHANNELS
-OWNER_ID = int(os.getenv("OWNER_ID", "1544404824076853258"))          # 👑 Bot owner ID
-LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "1544405575314440342"))  # 🧑‍💼 Legacy / Apply log channel
-GENERAL_LOG_CHANNEL_ID = int(os.getenv("GENERAL_LOG_CHANNEL_ID", "0"))    # 🧾 General server audit log
-APPLY_LOG_CHANNEL_ID = int(os.getenv("APPLY_LOG_CHANNEL_ID", str(LOG_CHANNEL_ID)))  # 🧑‍💼 Apply/application log
-JAIL_ROLE_ID = int(os.getenv("JAIL_ROLE_ID", "0"))                  # ⛓️ Jail role
-PROTECTED_ROLE_ID = int(os.getenv("PROTECTED_ROLE_ID", "0"))        # 🛡️ Protected role (optional)
-WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", "0"))      # 👋 Welcome channel; 0 = off
-LEAVE_CHANNEL_ID = int(os.getenv("LEAVE_CHANNEL_ID", "0"))          # 💔 Leave channel; 0 = off
-TEMP_VC_CHANNEL_ID = int(os.getenv("TEMP_VC_CHANNEL_ID", "1544406112097411072")) # 🔊 Temp VC creator
-TEMP_VC_DEFAULT_LIMIT = int(os.getenv("TEMP_VC_DEFAULT_LIMIT", "0"))  # 👥 0 = unlimited
-TEMP_VC_NAME_PREFIX = os.getenv("TEMP_VC_NAME_PREFIX", "🔊")  # 🔊 Temp room prefix
+# OWNER / LOGGING / IMPORTANT CHANNELS
+OWNER_ID = int(os.getenv("OWNER_ID", "1543760628093558794"))
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "1543761123046727691"))
+GENERAL_LOG_CHANNEL_ID = int(os.getenv("GENERAL_LOG_CHANNEL_ID", "0"))
+APPLY_LOG_CHANNEL_ID = int(os.getenv("APPLY_LOG_CHANNEL_ID", str(LOG_CHANNEL_ID)))
+JAIL_ROLE_ID = int(os.getenv("JAIL_ROLE_ID", "0"))
+PROTECTED_ROLE_ID = int(os.getenv("PROTECTED_ROLE_ID", "0"))
+WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", "0"))
+LEAVE_CHANNEL_ID = int(os.getenv("LEAVE_CHANNEL_ID", "0"))
+TEMP_VC_CHANNEL_ID = int(os.getenv("TEMP_VC_CHANNEL_ID", "1543761017342005413"))
+TEMP_VC_DEFAULT_LIMIT = int(os.getenv("TEMP_VC_DEFAULT_LIMIT", "0"))
+TEMP_VC_NAME_PREFIX = os.getenv("TEMP_VC_NAME_PREFIX", "🔊")
 
-# 📌 CHANNEL IDs — change the numbers only
+# CHANNEL IDS
 CHANNEL_IDS = {
-    "news": 1482902413554745638,        # 📰 News
-    "rules": 1482902414997852381,       # 📜 Rules
-    "self_roles": 1482902461168615465,  # 🎭 Self roles
-    "apply": 1482902427064864833,       # 🧑‍💼 Apply/team
-    "general": 1482902490549850184,     # 💬 General
-    "commands": 1482902491711541328,    # 🤖 Bot commands
-    "temp_voice": 1482902422065123338,  # 🔊 Temporary VC
+    "news": 1482902413554745638,
+    "rules": 1482902414997852381,
+    "self_roles": 1482902461168615465,
+    "apply": 1482902427064864833,
+    "general": 1482902490549850184,
+    "commands": 1482902491711541328,
+    "temp_voice": 1482902422065123338,
 
-    # 🧵 THREAD / TWEET ROOMS — put 0 if you want to use the current channel
-    "tweets": int(os.getenv("TWEETS_CHANNEL_ID", "1544405375632015552")),          # 🐦 Published tweet messages (NOT threads)
-    "general_threads": int(os.getenv("GENERAL_THREADS_CHANNEL_ID", "0")),  # 💬 General discussion threads
-    "apply_threads": int(os.getenv("APPLY_THREADS_CHANNEL_ID", "0")),      # 🧑‍💼 Application threads (optional)
+# THREAD ROOMS
+    "general_threads": int(os.getenv("GENERAL_THREADS_CHANNEL_ID", "0")),
+    "apply_threads": int(os.getenv("APPLY_THREADS_CHANNEL_ID", "0")),
 }
 
-# 🎭 ROLE IDs — change the numbers only
+# TWEET CHANNELS PER SERVER
+def _load_tweet_channels():
+    result = {}
+    raw = os.getenv("TWEET_CHANNELS", "1357114661295755304:1543761188557426788").strip()
+    if raw:
+        for item in raw.split(","):
+            item = item.strip()
+            if not item or ":" not in item:
+                continue
+            guild_id, channel_id = item.split(":", 1)
+            if guild_id.strip().isdigit() and channel_id.strip().isdigit():
+                gid = int(guild_id.strip())
+                cid = int(channel_id.strip())
+                if gid > 0 and cid > 0:
+                    result[gid] = cid
+    return result
+
+TWEET_CHANNELS = _load_tweet_channels()
+
+TWEET_FALLBACK_CHANNEL_ID = int(os.getenv("TWEET_FALLBACK_CHANNEL_ID", "1543761188557426788"))
+
+TWEET_PANEL_CHANNEL_ID = int(os.getenv("TWEET_PANEL_CHANNEL_ID", "1543761186917449829"))
+
+def _load_tweet_panel_channels():
+    result = {}
+    raw = os.getenv("TWEET_PANEL_CHANNELS", "1357114661295755304:1543761186917449829").strip()
+    if raw:
+        for item in raw.split(","):
+            item = item.strip()
+            if not item or ":" not in item:
+                continue
+            guild_id, channel_id = item.split(":", 1)
+            if guild_id.strip().isdigit() and channel_id.strip().isdigit():
+                gid = int(guild_id.strip())
+                cid = int(channel_id.strip())
+                if gid > 0 and cid > 0:
+                    result[gid] = cid
+    return result
+
+TWEET_PANEL_CHANNELS = _load_tweet_panel_channels()
+
+TWEET_IMAGE_HOST_CHANNEL_ID = int(os.getenv("TWEET_IMAGE_HOST_CHANNEL_ID", "0"))
+
+
+def get_tweet_channel(guild: discord.Guild):
+    """Return the configured Tweet channel for this guild, or None."""
+    if not guild:
+        return None
+
+    channel_id = TWEET_CHANNELS.get(guild.id)
+    if channel_id:
+        channel = guild.get_channel(channel_id)
+        if isinstance(channel, discord.TextChannel):
+            return channel
+
+    if TWEET_FALLBACK_CHANNEL_ID:
+        channel = guild.get_channel(TWEET_FALLBACK_CHANNEL_ID)
+        if isinstance(channel, discord.TextChannel):
+            return channel
+
+    names = {
+        "tweets", "tweet", "🐦-tweets", "🐦tweets",
+        "🐦・tweets", "🐦・tweet", "tweet-room", "tweet-room"
+    }
+    for channel in guild.text_channels:
+        if channel.name.lower() in names:
+            return channel
+
+    return None
+
+
+# ROLE IDS
 ROLE_IDS = {
-    # 🚀 Booster roles
-    "booster_nickname": 1523714779032584363,
-    "booster_moon": 1508497154313027675,
-    "booster_soundboard": 1482902118137462896,
-    "booster_pic": 1482902117693001898,
-    "booster_link": 1482902116858331217,
-    "booster_bughunter": 1482902047236952117,
-    "booster_vip": 1482902046653943870,
-    "booster_special": 1482902043558547650,
-
-    # 💘 Situation roles
-    "heartless": 1482902155219304549,
-    "taken": 1482902157324849333,
-    "single": 1482902156364484661,
-
-    # 🧑 Gender roles
-    "female": 1482902134071754832,
-    "male": 1482902134545580123,
-    "trans": 1482902135000000000,
-
-    # 🎮 Games roles
-    "valorant": 1482902200000000001,
-    "freefire": 1482902200000000002,
-    "pubg": 1482902200000000003,
-    "chess": 1482902200000000004,
-    "bloodstrike": 1482902200000000005,
+    "booster_nickname": 1543760781441499267,
+    "booster_moon": 1543760736659054653,
+    "booster_soundboard": 1543760782393745438,
+    "booster_pic": 1543760780506431658,
+    "booster_link": 1543760779583561848,
+    "booster_bughunter": 1543760735325261866,
+    "booster_vip": 1543760734662565992,
+    "booster_special": 1543760728391950428,
+    "heartless": 1543760809820168232,
+    "taken": 1543760811737088101,
+    "single": 1543760812869419098,
+    "female": 1543760795349946458,
+    "male": 1543760793726750790,
+    "trans": 1545555471564415017,
+    "valorant": 1543760829667745842,
+    "freefire": 1543760828598190100,
+    "pubg": 1543760842342801569,
+    "chess": 1543760830762590209,
+    "bloodstrike": 1543760843412344882,
+    "mafia_vip": 1543760822805860452,
+    "among_us_vip": 1543760823913287862,
+    "among_us": 1543760825590878269,
+    "gta5": 1543760826652041268,
+    "minecraft": 1543760832888967249,
+    "pes": 1543760834369421334,
+    "roblox": 1543760835397030070,
+    "stumble_guys": 1543760837066625084,
+    "brawlhalla": 1543760837846765671,
+    "counter_strike": 1543760839167709266,
+    "league_of_legends": 1543760840040386640,
+    "mafia": 1543760841042698241,
+    "fortnite": 1543760844590948362,
+    "parchisi": 1543760845723410492,
+    "call_of_duty": 1543760847220768850,
+    "plato": 1543760848689037382,
+    "code_names": 1543760849624113273,
+    "fifa": 1543760850320621603,
+    "rocket_league": 1543760852425904138,
 }
 
-# 😀 CUSTOM DISCORD EMOJIS — replace the value in quotes
+# CUSTOM DISCORD EMOJIS
 EMOJIS = {
     "hi": "<:theCall_pink_hi:1509305726655402185>",
     "instagram": "<:INSTA:1532413334261993602>",
@@ -222,22 +290,21 @@ EMOJIS = {
     "click": "<a:clickheaven:1400671930834747432>",
 }
 
-# 🖼️ COMMUNITY IMAGES
-# Replace these URLs with your own Discord CDN image links whenever you want.
-# No external image host is required.
+# COMMUNITY IMAGES
+
 COMMUNITY_IMAGE_URL = os.getenv(
     "COMMUNITY_IMAGE_URL",
-    "https://cdn.discordapp.com/attachments/1544405356258656347/1544728175827755178/octopus_png_banner.png"
+    "https://cdn.discordapp.com/attachments/1508515432834011160/1537230309756768256/From_Klickpin.com-_696861742315861333-pin-id-696861742315861333.gif?ex=6a9d440a&is=6a9bf28a&hm=7fd8183b5d3e247e74e27f6e3e9d85a9fbfe73349f643863474d5174e9fb5cbb&"
 )
 TWEET_PANEL_IMAGE_URL = os.getenv("TWEET_PANEL_IMAGE_URL", COMMUNITY_IMAGE_URL)
 
 IMAGES = {
-    "moon_logo": COMMUNITY_IMAGE_URL,
-    "panel_banner": COMMUNITY_IMAGE_URL,
-    "role_request": "",  # Leave empty to disable the role-request banner.
+    "moon_logo": "https://cdn.discordapp.com/attachments/1508515432834011160/1537230309756768256/From_Klickpin.com-_696861742315861333-pin-id-696861742315861333.gif?ex=6a9d440a&is=6a9bf28a&hm=7fd8183b5d3e247e74e27f6e3e9d85a9fbfe73349f643863474d5174e9fb5cbb&",
+    "panel_banner": "https://imgur.com/a/BZ4sB5B",
+    "role_request": "https://imgur.com/a/BZ4sB5B",
 }
 
-# 🔗 LINKS — change these when your socials/community links change
+
 LINKS = {
     "instagram": "https://instagram.com",
     "tiktok": "https://tiktok.com",
@@ -251,7 +318,7 @@ LINKS = {
 XP_COOLDOWN = 45
 DATA_FILE = "moon_night_data.json"
 
-# Music / Voice settings
+# MUSIC / VOICE SETTINGS
 YTDL_OPTIONS = {
     "format": "bestaudio/best",
     "noplaylist": True,
@@ -262,14 +329,10 @@ YTDL_OPTIONS = {
 }
 FFMPEG_BEFORE_OPTIONS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 
-# 🎨 Embed color — change this HEX if you want another theme color.
+# EMBED COLOR
 EMBED_COLOR = 0x2b2d31
 
-# 🧾 AUDIT / SERVER LOG ROOMS
-# Put one or more channel IDs here, separated by commas.
-# Example: "123456789012345678,987654321098765432"
-# General audit logs are kept separate from Apply logs.
-# You can still use AUDIT_LOG_CHANNEL_IDS for multiple general log rooms.
+# AUDIT / SERVER LOG ROOMS
 _general_log_env = os.getenv("AUDIT_LOG_CHANNEL_IDS", "")
 if _general_log_env.strip():
     AUDIT_LOG_CHANNEL_IDS = [
@@ -280,10 +343,8 @@ if _general_log_env.strip():
 else:
     AUDIT_LOG_CHANNEL_IDS = [GENERAL_LOG_CHANNEL_ID] if GENERAL_LOG_CHANNEL_ID > 0 else []
 
-# How far back we search Discord Audit Logs to match the action with its actor.
 AUDIT_MATCH_SECONDS = 20
 
-# 🧾 Log appearance / emoji — easy to customize from this section.
 LOG_EMOJIS = {
     "member_join": "📥",
     "member_leave": "📤",
@@ -324,13 +385,10 @@ def role_mention(name: str) -> str:
 
 intents = discord.Intents.default()
 intents.members = True
-intents.presences = True
 intents.message_content = True
 
 
-# ==========================================
 # MODERATION / SERVER INFO HELPERS
-# ==========================================
 PROTECTED_USERS = set()
 SERVER_PEAK_MEMBERS = {}
 
@@ -395,9 +453,7 @@ def get_protected_role(guild: discord.Guild):
     return discord.utils.get(guild.roles, name="Protected")
 
 
-# ==========================================
 # COMMUNITY / GAMES DATA
-# ==========================================
 DEFAULT_DATA = {
     "economy": {},
     "xp": {},
@@ -420,7 +476,7 @@ def load_data():
 DATA = load_data()
 XP_LAST_MESSAGE = {}
 TEMP_VCS = {}
-TEMP_VC_META = {}  # channel_id -> {owner, locked, limit, created_at}
+TEMP_VC_META = {}
 MAFIA_GAMES = {}
 
 def save_data():
@@ -480,7 +536,6 @@ class DarkNightBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        # Register persistent views so buttons stay active after restart
         self.add_view(SocialsView())
         self.add_view(RulesView())
         self.add_view(ApplyView())
@@ -490,17 +545,12 @@ class DarkNightBot(commands.Bot):
         self.add_view(GamesRolesView())
         self.add_view(RoleRequestView())
         self.add_view(TweetPanelView())
+        self.add_view(VoicePanelControlView())
         self.add_view(GamesCenterView())
         self.add_view(TempVCControlView())
-        
+
         await self.tree.sync()
         print("Slash Commands Synced & Persistent Views Registered Successfully!")
-        print("[ABOUT] Presence Intent enabled: online/idle/dnd/offline stats are available.")
-        for g in self.guilds:
-            print(
-                f"[ABOUT] {g.name}: member_count={g.member_count}, "
-                f"cached_members={len(g.members)}"
-            )
 
 bot = DarkNightBot()
 
@@ -513,9 +563,7 @@ def is_owner_or_admin():
     return app_commands.check(predicate)
 
 
-# ==========================================
-# 1. SOCIALS PANEL
-# ==========================================
+# SOCIALS PANEL
 class SocialsView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -541,9 +589,7 @@ def get_socials_embed():
     return embed
 
 
-# ==========================================
-# 2. STATS PANEL
-# ==========================================
+# STATS PANEL
 class StatsView(View):
     def __init__(self, guild: discord.Guild):
         super().__init__(timeout=None)
@@ -573,9 +619,7 @@ def get_stats_embed(guild: discord.Guild):
     return embed
 
 
-# ==========================================
-# 3. RULES PANEL
-# ==========================================
+# RULES PANEL
 class RulesView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -606,9 +650,7 @@ def get_rules_embed():
     return embed
 
 
-# ==========================================
-# 4. GUIDMAP / SERVER MAP PANEL
-# ==========================================
+# GUIDMAP / SERVER MAP PANEL
 def get_map_embed():
     embed = discord.Embed(
         title=f"{EMOJIS['welcome']} ◜__Welcome To Dark Night!__◞",
@@ -635,9 +677,7 @@ def get_map_embed():
     return embed
 
 
-# ==========================================
-# 5. APPLY TEAM PANEL
-# ==========================================
+# APPLY TEAM PANEL
 class ApplyModal(Modal, title="Staff Application Form"):
     age = TextInput(label="How old are you?", placeholder="e.g. 18", min_length=1, max_length=2)
     experience = TextInput(label="Experience & Active Time", style=discord.TextStyle.paragraph, placeholder="Describe your experience...")
@@ -697,9 +737,7 @@ def get_apply_embed():
     return embed
 
 
-# ==========================================
-# 6. BOOSTERS PERKS / ROLE PANEL
-# ==========================================
+# BOOSTERS PERKS / ROLE PANEL
 class BoosterRolesView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -720,20 +758,18 @@ class BoosterRolesView(View):
 
     def create_booster_button(self, label: str, role_id: int):
         button = Button(label=f"• {label}", style=ButtonStyle.secondary, custom_id=f"booster_{role_id}")
-        
+
         async def button_callback(interaction: Interaction):
             role = interaction.guild.get_role(role_id)
             if not role:
                 return await interaction.response.send_message("❌ Role not found on server!", ephemeral=True)
-            
-            # Only current server boosters can use booster perks.
+
             if not interaction.user.premium_since:
                 return await interaction.response.send_message(
                     "🚀 **Booster Only!** You need to be boosting this server to use these perks.",
                     ephemeral=True
                 )
 
-            # Only one booster perk role at a time.
             booster_role_ids = {
                 ROLE_IDS["booster_nickname"],
                 ROLE_IDS["booster_moon"],
@@ -793,40 +829,74 @@ def get_booster_embed():
     return embed
 
 
-# ==========================================
-# 7. SELF ROLES PANEL (SITUATIONS, GENDER, GAMES)
-# ==========================================
-# ROLE_IDS is configured in the EASY CUSTOMIZATION section at the top.
+# SELF ROLES PANEL
+
+
+GAMES_ROLE_NAMES = {
+    "valorant": "Valorant",
+    "freefire": "Free Fire",
+    "pubg": "Pubg Mobile",
+    "chess": "chess",
+    "bloodstrike": "Blood strike",
+    "mafia_vip": "Mafia VIP 9",
+    "among_us_vip": "Among Us VIP",
+    "among_us": "Among Us",
+    "gta5": "GTA 5",
+    "minecraft": "Minecraft",
+    "pes": "Pes",
+    "roblox": "Roblox",
+    "stumble_guys": "Stumble Guys",
+    "brawlhalla": "Brawlhalla",
+    "counter_strike": "Counter Strike",
+    "league_of_legends": "League Of Legends",
+    "mafia": "Mafia",
+    "fortnite": "Fortnite",
+    "parchisi": "Parchisi",
+    "call_of_duty": "Call Of Duty",
+    "plato": "Plato",
+    "code_names": "Code Names",
+    "fifa": "FIFA",
+    "rocket_league": "Rocket league",
+}
+
+
+def _normalize_role_name(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value).lower())
+
+
+def get_configured_role(guild: discord.Guild, role_key: str):
+    if not guild:
+        return None
+
+    role_id = ROLE_IDS.get(role_key, 0)
+    if not role_id and role_key.startswith("role_"):
+        role_id = ROLE_IDS.get(role_key[5:], 0)
+
+    if role_id:
+        role = guild.get_role(role_id)
+        if role:
+            return role
+
+    expected_name = GAMES_ROLE_NAMES.get(role_key)
+    if not expected_name and role_key.startswith("role_"):
+        expected_name = GAMES_ROLE_NAMES.get(role_key[5:])
+    if not expected_name:
+        return None
+
+    expected = _normalize_role_name(expected_name)
+    for role in guild.roles:
+        if _normalize_role_name(role.name) == expected:
+            return role
+
+    return None
 
 
 async def toggle_role(interaction: Interaction, role_key: str):
-    # Buttons/select options use component keys such as role_heartless,
-    # while ROLE_IDS stores the real config keys (heartless, taken,
-    # single, valorant, freefire, pubg, chess, bloodstrike).
-    role_aliases = {
-        "role_heartless": "heartless",
-        "role_taken": "taken",
-        "role_single": "single",
-        "role_female": "female",
-        "role_male": "male",
-        "role_trans": "trans",
-        "role_val": "valorant",
-        "role_ff": "freefire",
-        "role_pubg": "pubg",
-        "role_chess": "chess",
-        "role_bs": "bloodstrike",
-    }
-    config_key = role_aliases.get(role_key, role_key)
-    role_id = ROLE_IDS.get(config_key)
-    role = interaction.guild.get_role(role_id) if role_id else None
+    role = get_configured_role(interaction.guild, role_key)
 
     if not role:
-        return await interaction.response.send_message(
-            f"❌ Role `{config_key}` was not found in this server.\n"
-            f"🔑 Configured role ID: `{role_id or 'NOT SET'}`",
-            ephemeral=True,
-        )
-        
+        return await interaction.response.send_message(f"❌ Role for `{role_key}` is not configured or not found!", ephemeral=True)
+
     if role in interaction.user.roles:
         await interaction.user.remove_roles(role, reason=f"Self-role removal by {interaction.user} ({interaction.user.id})")
         await interaction.response.send_message(f"➖ Removed **{role.name}**!", ephemeral=True)
@@ -838,7 +908,6 @@ async def toggle_role(interaction: Interaction, role_key: str):
         action = "Role Added"
         emoji = "➕"
 
-    # These role buttons know the exact channel where the action happened.
     await send_audit_log(
         interaction.guild,
         title=action,
@@ -887,12 +956,33 @@ class GamesRolesView(View):
 
     @discord.ui.select(
         placeholder="Select A Games Role!",
+        min_values=1,
+        max_values=1,
         options=[
-            discord.SelectOption(label="Valorant", description="Select for Valorant Role", value="role_val", emoji="🎮"),
-            discord.SelectOption(label="Free Fire", description="Select for Free Fire Role", value="role_ff", emoji="🔥"),
-            discord.SelectOption(label="Pubg Mobile", description="Select for PUBG Role", value="role_pubg", emoji="🔫"),
-            discord.SelectOption(label="Chess", description="Select for Chess Role", value="role_chess", emoji="♟️"),
-            discord.SelectOption(label="Blood Strike", description="Select for Blood Strike Role", value="role_bs", emoji="⚔️"),
+            discord.SelectOption(label="Mafia VIP 9", value="mafia_vip", emoji="🎭"),
+            discord.SelectOption(label="Among Us VIP", value="among_us_vip", emoji="🔷"),
+            discord.SelectOption(label="Among Us", value="among_us", emoji="👨‍🚀"),
+            discord.SelectOption(label="GTA 5", value="gta5", emoji="🚗"),
+            discord.SelectOption(label="Free Fire", value="freefire", emoji="🔥"),
+            discord.SelectOption(label="Valorant", value="valorant", emoji="🎮"),
+            discord.SelectOption(label="Chess", value="chess", emoji="♟️"),
+            discord.SelectOption(label="Minecraft", value="minecraft", emoji="⛏️"),
+            discord.SelectOption(label="Pes", value="pes", emoji="⚽"),
+            discord.SelectOption(label="Roblox", value="roblox", emoji="🟥"),
+            discord.SelectOption(label="Stumble Guys", value="stumble_guys", emoji="🏃"),
+            discord.SelectOption(label="Brawlhalla", value="brawlhalla", emoji="⚔️"),
+            discord.SelectOption(label="Counter Strike", value="counter_strike", emoji="🔫"),
+            discord.SelectOption(label="League Of Legends", value="league_of_legends", emoji="🏆"),
+            discord.SelectOption(label="Mafia", value="mafia", emoji="🕵️"),
+            discord.SelectOption(label="Pubg Mobile", value="pubg", emoji="🔫"),
+            discord.SelectOption(label="Blood strike", value="bloodstrike", emoji="⚔️"),
+            discord.SelectOption(label="Fortnite", value="fortnite", emoji="🪂"),
+            discord.SelectOption(label="Parchisi", value="parchisi", emoji="🎲"),
+            discord.SelectOption(label="Call Of Duty", value="call_of_duty", emoji="💥"),
+            discord.SelectOption(label="Plato", value="plato", emoji="🎯"),
+            discord.SelectOption(label="Code Names", value="code_names", emoji="🧩"),
+            discord.SelectOption(label="FIFA", value="fifa", emoji="⚽"),
+            discord.SelectOption(label="Rocket league", value="rocket_league", emoji="🚀"),
         ],
         custom_id="select_games_roles"
     )
@@ -940,9 +1030,7 @@ def get_self_roles_data():
     ]
 
 
-# ==========================================
-# 8. ROLE REQUEST PANEL (WITH LOGGING)
-# ==========================================
+# ROLE REQUEST PANEL
 class RoleRequestSelect(Select):
     def __init__(self):
         options = [
@@ -973,7 +1061,7 @@ class RoleRequestSelect(Select):
             )
             log_embed.set_thumbnail(url=interaction.user.display_avatar.url)
             log_embed.set_footer(text="Dark Night Logging System", icon_url=interaction.guild.icon.url if interaction.guild.icon else None)
-            
+
             await log_channel.send(embed=log_embed)
 
 class RoleRequestView(View):
@@ -1007,15 +1095,7 @@ def get_role_request_embed():
 
 
 
-# ==========================================
-# 9. 🐦 DARK NIGHT TWEETS
-# ==========================================
-# Tweets are native Discord embeds:
-# - No external image host is required.
-# - The member avatar is a small thumbnail.
-# - The tweet text is large and clean inside the embed.
-# - Dark/Light changes the embed theme.
-# - The real Discord member is mentioned in the message.
+# DARK NIGHT TWEETS
 
 TWEET_WIDTH = 1200
 TWEET_HEIGHT = 675
@@ -1098,15 +1178,12 @@ async def create_tweet_image(member: discord.Member, text: str, theme: str):
     image = Image.new("RGBA", (TWEET_WIDTH, TWEET_HEIGHT), bg)
     draw = ImageDraw.Draw(image)
 
-    # Soft decorative background, without any external image or Imgur dependency.
     draw.ellipse((-220, -260, 520, 460), fill=(45, 38, 90, 150) if dark else (219, 229, 255, 255))
     draw.ellipse((850, -240, 1370, 280), fill=(54, 43, 110, 130) if dark else (220, 232, 255, 255))
 
-    # Compact card — intentionally not full-canvas content.
     cx1, cy1, cx2, cy2 = 78, 105, 1122, 570
     draw.rounded_rectangle((cx1, cy1, cx2, cy2), radius=30, fill=card, outline=(74, 70, 90, 255) if dark else (213, 216, 223, 255), width=2)
 
-    # Header branding.
     title_font = _tweet_font(34, True)
     small_font = _tweet_font(20, False)
     name_font = _tweet_font(31, True)
@@ -1117,7 +1194,6 @@ async def create_tweet_image(member: discord.Member, text: str, theme: str):
     draw.text((cx1 + 36, 34), "Dark Night Community", font=title_font, fill=primary)
     draw.text((cx1 + 36, 72), "COMMUNITY TWEET", font=small_font, fill=secondary)
 
-    # Small moon mark, no remote logo required.
     draw.ellipse((1030, 38, 1070, 78), fill=accent)
     draw.ellipse((1044, 30, 1075, 66), fill=bg)
 
@@ -1138,7 +1214,6 @@ async def create_tweet_image(member: discord.Member, text: str, theme: str):
     draw.text((verified_x + 6, ay + 9), "✓", font=check_font, fill=(255,255,255,255))
     draw.text((name_x, ay + 42), f"@{member.name}", font=handle_font, fill=secondary)
 
-    # Theme pill.
     pill_text = "DARK TWEET" if dark else "WHITE TWEET"
     pill_font = _tweet_font(18, True)
     pb = draw.textbbox((0, 0), pill_text, font=pill_font)
@@ -1146,14 +1221,12 @@ async def create_tweet_image(member: discord.Member, text: str, theme: str):
     draw.rounded_rectangle((cx2 - pw - 28, cy1 + 34, cx2 - 28, cy1 + 72), radius=19, fill=accent if dark else (231, 235, 242, 255))
     draw.text((cx2 - pw - 11, cy1 + 43), pill_text, font=pill_font, fill=(255,255,255,255) if dark else primary)
 
-    # Tweet body.
     lines = _tweet_wrap(draw, " ".join(text.strip().split()), body_font, cx2 - cx1 - 90)
     body_y = cy1 + 145
     for line in lines:
         draw.text((cx1 + 38, body_y), line, font=body_font, fill=primary)
         body_y += 48
 
-    # Footer stats in ONE ROW, as requested.
     divider_y = cy2 - 92
     draw.line((cx1 + 38, divider_y, cx2 - 38, divider_y), fill=divider, width=2)
     stats_y = divider_y + 28
@@ -1165,7 +1238,6 @@ async def create_tweet_image(member: discord.Member, text: str, theme: str):
         draw.text((sx + (ib[2]-ib[0]) + 9, stats_y), label, font=stat_font, fill=primary)
         sx += 205
 
-    # Bottom-right time/date and community branding.
     now = datetime.now(timezone.utc)
     time_font = _tweet_font(18, False)
     date_text = now.strftime("%H:%M • %d %B %Y")
@@ -1178,6 +1250,101 @@ async def create_tweet_image(member: discord.Member, text: str, theme: str):
     image.convert("RGB").save(output, format="PNG", optimize=True)
     output.seek(0)
     return output
+
+
+async def _get_member_for_channel_permissions(guild: discord.Guild):
+    me = guild.me
+    if me is not None:
+        return me
+    try:
+        return await guild.fetch_member(bot.user.id)
+    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+        return None
+
+
+async def _find_tweet_image_host_channel(exclude_guild_id: int):
+    """Find a channel in another guild where the bot can upload the tweet PNG.
+
+    Discord can block uploads for one guild at the guild level. An attachment
+    uploaded to a different guild's Discord CDN can still be displayed by an
+    embed in the target guild, so we use a dedicated/available channel as a
+    small image host.
+    """
+    if TWEET_IMAGE_HOST_CHANNEL_ID:
+        configured = bot.get_channel(TWEET_IMAGE_HOST_CHANNEL_ID)
+        if isinstance(configured, discord.TextChannel) and configured.guild.id != exclude_guild_id:
+            me = await _get_member_for_channel_permissions(configured.guild)
+            if me is not None:
+                perms = configured.permissions_for(me)
+                if perms.view_channel and perms.send_messages and perms.attach_files:
+                    return configured
+
+    preferred_names = {
+        "tweet-image-host", "tweet-images", "tweet-image",
+        "image-host", "images", "bot-images", "bot-media",
+        "tweets", "tweet", "test", "testing",
+    }
+
+    candidates = []
+    for guild in bot.guilds:
+        if guild.id == exclude_guild_id:
+            continue
+
+        me = await _get_member_for_channel_permissions(guild)
+        if me is None:
+            continue
+
+        for channel in guild.text_channels:
+            perms = channel.permissions_for(me)
+            if not (perms.view_channel and perms.send_messages and perms.attach_files):
+                continue
+
+            score = 0
+            if channel.name.lower() in preferred_names:
+                score += 100
+            if any(word in channel.name.lower() for word in ("tweet", "image", "media", "test", "bot")):
+                score += 25
+            score += max(0, 10 - channel.position)
+            candidates.append((score, channel))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+
+async def _upload_tweet_image_to_discord_cdn(image_bytes, filename: str, exclude_guild_id: int):
+    """Upload the generated PNG to another guild and return its Discord CDN URL."""
+    host_channel = await _find_tweet_image_host_channel(exclude_guild_id)
+    if host_channel is None:
+        print(f"[TWEET IMAGE HOST] No usable upload channel found outside guild {exclude_guild_id}.")
+        return None
+
+    try:
+        image_bytes.seek(0)
+        host_message = await host_channel.send(
+            file=discord.File(image_bytes, filename=filename),
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        if not host_message.attachments:
+            print(f"[TWEET IMAGE HOST] Upload succeeded but no attachment URL was returned. Channel={host_channel.id}")
+            return None
+
+        url = host_message.attachments[0].url
+        print(
+            f"[TWEET IMAGE HOST] Uploaded tweet image to {host_channel.guild.name} "
+            f"#{host_channel.name} ({host_channel.id}) -> {url}"
+        )
+        return url
+    except discord.Forbidden as exc:
+        print(f"[TWEET IMAGE HOST] Forbidden in channel {host_channel.id}: {exc!r}")
+    except discord.HTTPException as exc:
+        print(f"[TWEET IMAGE HOST] HTTP error in channel {host_channel.id}: {exc!r}")
+    except Exception as exc:
+        print(f"[TWEET IMAGE HOST] Unexpected error: {type(exc).__name__}: {exc!r}")
+
+    return None
 
 
 class TweetModal(Modal):
@@ -1196,34 +1363,73 @@ class TweetModal(Modal):
 
     async def on_submit(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
-        post_channel_id = CHANNEL_IDS.get("tweets", 0)
-        post_channel = (
-            interaction.guild.get_channel(post_channel_id)
-            if interaction.guild and post_channel_id
-            else None
-        )
+
+        guild = interaction.guild
+        if guild is None:
+            return await interaction.followup.send(
+                "❌ Tweets can only be used inside a server.",
+                ephemeral=True,
+            )
+
+        post_channel = get_tweet_channel(guild)
 
         if not isinstance(post_channel, discord.TextChannel):
+            configured = TWEET_CHANNELS.get(guild.id)
+            configured_text = f"`{configured}`" if configured else "not configured"
             return await interaction.followup.send(
-                "❌ Tweet channel is not configured for this server.\n"
-                f"🔑 Current `CHANNEL_IDS['tweets']`: `{post_channel_id or 'NOT SET'}`\n"
-                "➡️ Put the ID of the text channel where tweets must be posted in `CHANNEL_IDS['tweets']`.",
+                "❌ I couldn't find a Tweet channel for this server.\n\n"
+                f"Server ID: `{guild.id}`\n"
+                f"Configured Tweet Channel: {configured_text}\n\n"
+                "Set this in Railway/environment variables as:\n"
+                "`TWEET_CHANNELS=SERVER_ID:CHANNEL_ID`",
                 ephemeral=True,
             )
 
-        permissions = post_channel.permissions_for(interaction.guild.me)
-        if not permissions.view_channel or not permissions.send_messages or not permissions.embed_links or not permissions.attach_files:
+        if post_channel.guild.id != guild.id:
             return await interaction.followup.send(
-                "❌ I found the tweet channel, but I don't have the required permissions there.\n"
-                "I need: **View Channel + Send Messages + Embed Links + Attach Files**.",
+                "❌ The configured Tweet channel belongs to another server.",
                 ephemeral=True,
             )
+
+        me = guild.me
+        if me is None:
+            try:
+                me = await guild.fetch_member(bot.user.id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                me = None
+
+        if me is not None:
+            perms = post_channel.permissions_for(me)
+            missing = []
+
+            if not perms.view_channel:
+                missing.append("View Channel")
+            if not perms.send_messages:
+                missing.append("Send Messages")
+            if not perms.embed_links:
+                missing.append("Embed Links")
+
+            if missing and not perms.administrator:
+                return await interaction.followup.send(
+                    "❌ I don't have the required permissions in the Tweet channel.\n\n"
+                    + "Missing: " + ", ".join(f"`{x}`" for x in missing)
+                    + f"\n\nChannel: {post_channel.mention}",
+                    ephemeral=True,
+                )
 
         tweet_text = " ".join(self.thought.value.strip().split())
         now = datetime.now(timezone.utc)
-        image_bytes = await create_tweet_image(interaction.user, tweet_text, self.theme)
 
-        # The Discord embed is only the frame. The actual tweet design is the compact image inside it.
+        try:
+            image_bytes = await create_tweet_image(
+                interaction.user,
+                tweet_text,
+                self.theme,
+            )
+        except Exception as exc:
+            print(f"[TWEET IMAGE] Creation failed: {type(exc).__name__}: {exc!r}")
+            image_bytes = None
+
         embed = discord.Embed(
             title=f"🐦 New Tweet By · @{interaction.user.name}",
             color=0x111318 if self.theme == "dark" else 0xE8EBF0,
@@ -1231,45 +1437,160 @@ class TweetModal(Modal):
         )
         embed.set_footer(text="Dark Night Community • Share your thoughts")
 
-        if image_bytes is not None:
-            file = discord.File(image_bytes, filename="dark_night_tweet.png")
-            embed.set_image(url="attachment://dark_night_tweet.png")
-            published_message = await post_channel.send(
-                content=interaction.user.mention,
-                embed=embed,
-                file=file,
-                allowed_mentions=discord.AllowedMentions(users=[interaction.user]),
+        try:
+            image_url = None
+
+            if image_bytes is not None:
+                image_url = await _upload_tweet_image_to_discord_cdn(
+                    image_bytes,
+                    "dark_night_tweet.png",
+                    guild.id,
+                )
+
+            if image_url:
+                embed.set_image(url=image_url)
+                published_message = await post_channel.send(
+                    content=interaction.user.mention,
+                    embed=embed,
+                    allowed_mentions=discord.AllowedMentions(
+                        users=[interaction.user]
+                    ),
+                )
+            elif image_bytes is not None:
+                image_bytes.seek(0)
+                file = discord.File(image_bytes, filename="dark_night_tweet.png")
+                embed.set_image(url="attachment://dark_night_tweet.png")
+                published_message = await post_channel.send(
+                    content=interaction.user.mention,
+                    embed=embed,
+                    file=file,
+                    allowed_mentions=discord.AllowedMentions(
+                        users=[interaction.user]
+                    ),
+                )
+            else:
+                embed.description = tweet_text
+                embed.add_field(name="💬 Replies", value="`0`", inline=True)
+                embed.add_field(name="❤️ Likes", value="`0`", inline=True)
+                embed.add_field(name="👁️ Views", value="`0`", inline=True)
+
+                published_message = await post_channel.send(
+                    content=interaction.user.mention,
+                    embed=embed,
+                    allowed_mentions=discord.AllowedMentions(
+                        users=[interaction.user]
+                    ),
+                )
+
+        except discord.Forbidden as exc:
+            print("\n" + "=" * 70)
+            print("[TWEET] DISCORD FORBIDDEN")
+            print(f"Guild       : {guild.name} ({guild.id})")
+            print(f"Channel     : {post_channel.name} ({post_channel.id})")
+            print(f"Bot         : {bot.user} ({bot.user.id if bot.user else 'unknown'})")
+            if me is not None:
+                print(f"Bot role    : {me.top_role.name} ({me.top_role.id})")
+                p = post_channel.permissions_for(me)
+                print(f"View        : {p.view_channel}")
+                print(f"Send        : {p.send_messages}")
+                print(f"Embed       : {p.embed_links}")
+                print(f"Attach      : {p.attach_files}")
+                print(f"Admin       : {p.administrator}")
+            print(f"Exception   : {exc!r}")
+            print("=" * 70 + "\n")
+
+            if getattr(exc, "code", None) == 400001:
+                fallback_embed = discord.Embed(
+                    title=f"🐦 New Tweet By · @{interaction.user.name}",
+                    description=tweet_text,
+                    color=0x111318 if self.theme == "dark" else 0xE8EBF0,
+                    timestamp=now,
+                )
+                fallback_embed.set_thumbnail(url=str(interaction.user.display_avatar.url))
+                fallback_embed.add_field(name="💬 Replies", value="`0`", inline=True)
+                fallback_embed.add_field(name="❤️ Likes", value="`0`", inline=True)
+                fallback_embed.add_field(name="👁️ Views", value="`0`", inline=True)
+                fallback_embed.set_footer(text="Dark Night Community • Uploads restricted in this server")
+
+                try:
+                    published_message = await post_channel.send(
+                        content=interaction.user.mention,
+                        embed=fallback_embed,
+                        allowed_mentions=discord.AllowedMentions(users=[interaction.user]),
+                    )
+                except discord.HTTPException as fallback_exc:
+                    print(f"[TWEET] 400001 fallback also failed: {fallback_exc!r}")
+                    return await interaction.followup.send(
+                        "❌ Discord is blocking file uploads in this server, and the fallback message also failed.",
+                        ephemeral=True,
+                    )
+            else:
+                return await interaction.followup.send(
+                    "❌ Discord refused the message.\n\n"
+                    "The bot reached the correct Tweet channel, but Discord blocked the send.\n"
+                    "Check the channel/category permissions for the bot role.\n\n"
+                    "Required: `View Channel`, `Send Messages`, `Embed Links`, `Attach Files`.",
+                    ephemeral=True,
+                )
+
+        except discord.HTTPException as exc:
+            print(
+                f"[TWEET] HTTP error | Guild={guild.id} | "
+                f"Channel={post_channel.id} | {type(exc).__name__}: {exc!r}"
             )
-        else:
-            # Clean fallback if Pillow is ever unavailable.
-            embed.add_field(name="💬 Replies", value="`0`", inline=True)
-            embed.add_field(name="❤️ Likes", value="`0`", inline=True)
-            embed.add_field(name="👁️ Views", value="`0`", inline=True)
-            published_message = await post_channel.send(
-                content=interaction.user.mention,
-                embed=embed,
-                allowed_mentions=discord.AllowedMentions(users=[interaction.user]),
+            return await interaction.followup.send(
+                f"❌ Discord returned an HTTP error: `{type(exc).__name__}`.",
+                ephemeral=True,
             )
 
-        jump_url = f"https://discord.com/channels/{interaction.guild.id}/{post_channel.id}/{published_message.id}"
+        except Exception as exc:
+            print(
+                f"[TWEET] Unexpected error | Guild={guild.id} | "
+                f"Channel={post_channel.id} | {type(exc).__name__}: {exc!r}"
+            )
+            return await interaction.followup.send(
+                "❌ Something went wrong while posting the tweet.\n"
+                "Check the bot console for the exact error.",
+                ephemeral=True,
+            )
+
+        jump_url = (
+            f"https://discord.com/channels/"
+            f"{guild.id}/{post_channel.id}/{published_message.id}"
+        )
+
         success = discord.Embed(
             title="✅ Tweet Posted",
-            description=f"Your tweet is live in {post_channel.mention}.\n[Jump to tweet]({jump_url})",
+            description=(
+                f"Your tweet is live in {post_channel.mention}.\n"
+                f"[Jump to tweet]({jump_url})"
+            ),
             color=0x57F287,
         )
-        await interaction.followup.send(embed=success, ephemeral=True)
 
-        await send_audit_log(
-            interaction.guild,
-            title="🐦 Tweet Published",
-            actor=interaction.user,
-            target=interaction.user,
-            channel=post_channel,
-            extra_fields=[
-                ("Theme", "Dark Tweet" if self.theme == "dark" else "White Tweet", True),
-                ("Content", tweet_text[:1024], False),
-            ],
+        await interaction.followup.send(
+            embed=success,
+            ephemeral=True,
         )
+
+        try:
+            await send_audit_log(
+                guild,
+                title="🐦 Tweet Published",
+                actor=interaction.user,
+                target=interaction.user,
+                channel=post_channel,
+                extra_fields=[
+                    (
+                        "Theme",
+                        "Dark Tweet" if self.theme == "dark" else "White Tweet",
+                        True,
+                    ),
+                    ("Content", tweet_text[:1024], False),
+                ],
+            )
+        except Exception as exc:
+            print(f"[TWEET LOG] Failed: {type(exc).__name__}: {exc!r}")
 
 
 class TweetPanelView(View):
@@ -1349,9 +1670,7 @@ async def threads(interaction: Interaction, destination: app_commands.Choice[str
         )
 
 
-# ==========================================
-# 9. MODERATION COMMANDS
-# ==========================================
+# MODERATION COMMANDS
 
 @bot.tree.command(name="mutechat", description="Timeout a member in chat")
 @app_commands.describe(
@@ -1545,24 +1864,15 @@ async def about(interaction: Interaction):
 
     update_peak_members(guild)
 
-    # Discord's guild.member_count is the authoritative total.
-    # Presence Intent supplies the online/idle/dnd states.
     total = guild.member_count or len(guild.members)
-
-    online = sum(
+    active = sum(
         1 for m in guild.members
-        if m.status == discord.Status.online
+        if m.status in {
+            discord.Status.online,
+            discord.Status.idle,
+            discord.Status.dnd
+        }
     )
-    idle = sum(
-        1 for m in guild.members
-        if m.status == discord.Status.idle
-    )
-    dnd = sum(
-        1 for m in guild.members
-        if m.status == discord.Status.dnd
-    )
-
-    active = online + idle + dnd
     offline = max(total - active, 0)
     roles = len(guild.roles)
     channels = len(guild.channels)
@@ -1634,15 +1944,7 @@ async def invite(interaction: Interaction):
     )
 
 
-# ==========================================
-# 🧾 DARK NIGHT — FULL SERVER LOGGING SYSTEM
-# ==========================================
-# Logs are sent to every channel listed in AUDIT_LOG_CHANNEL_IDS.
-# Discord Audit Logs are used whenever possible so the embed shows:
-# 👤 who did it | 🎯 who/what was affected | 📍 exact channel | 📝 reason | ⏰ time
-# Some Discord events (for example a deleted message) do not expose the
-# moderator who deleted it through the Gateway event, so those are marked
-# as "Unknown / Discord did not expose actor" unless an audit entry matches.
+# DARK NIGHT SERVER LOGGING
 
 AUDIT_LAST_SEEN = {}
 INVITE_CACHE = {}
@@ -1683,7 +1985,6 @@ async def _find_audit_entry(guild: discord.Guild, action_name: str, target_id=No
                 break
             if target_id is not None and _entry_target_id(entry) != target_id:
                 continue
-            # Avoid returning the same entry twice after reconnects.
             cache_key = (guild.id, entry.id)
             if cache_key in AUDIT_LAST_SEEN:
                 continue
@@ -1800,7 +2101,6 @@ async def send_audit_log(
     embed.set_footer(text=f"Dark Night • {guild.name} • Server Audit", icon_url=guild_icon)
 
     for log_channel in _log_channel_targets(guild):
-        # Never let a broken logging room crash the bot.
         try:
             await log_channel.send(embed=embed)
         except (discord.Forbidden, discord.HTTPException):
@@ -1852,9 +2152,6 @@ async def detect_used_invite(member: discord.Member):
     return used
 
 
-# ==========================================
-# 👥 MEMBER LOGS
-# ==========================================
 @bot.listen("on_member_join")
 async def audit_member_join(member: discord.Member):
     invite = await detect_used_invite(member)
@@ -1925,7 +2222,6 @@ async def audit_member_update(before: discord.Member, after: discord.Member):
     if before.guild is None:
         return
 
-    # 🎭 Roles added / removed — exact role names and IDs.
     before_roles = {r.id: r for r in before.roles if r.is_default() is False}
     after_roles = {r.id: r for r in after.roles if r.is_default() is False}
     added = [after_roles[rid] for rid in after_roles.keys() - before_roles.keys()]
@@ -1947,7 +2243,6 @@ async def audit_member_update(before: discord.Member, after: discord.Member):
             extra_fields=fields,
         )
 
-    # 👤 Nickname / timeout / profile changes.
     changes = []
     if before.nick != after.nick:
         changes.append(("🏷️ Nickname", f"`{before.nick or 'None'}` → `{after.nick or 'None'}`", True))
@@ -1968,9 +2263,6 @@ async def audit_member_update(before: discord.Member, after: discord.Member):
         )
 
 
-# ==========================================
-# 🎭 ROLE LOGS
-# ==========================================
 @bot.listen("on_guild_role_create")
 async def audit_role_create(role: discord.Role):
     entry = await _find_audit_entry(role.guild, "role_create", role.id)
@@ -2020,9 +2312,6 @@ async def audit_role_update(before: discord.Role, after: discord.Role):
         )
 
 
-# ==========================================
-# 📁 CHANNEL / THREAD LOGS
-# ==========================================
 @bot.listen("on_guild_channel_create")
 async def audit_channel_create(channel: discord.abc.GuildChannel):
     entry = await _find_audit_entry(channel.guild, "channel_create", channel.id)
@@ -2102,9 +2391,6 @@ async def audit_thread_update(before: discord.Thread, after: discord.Thread):
         )
 
 
-# ==========================================
-# 💬 MESSAGE LOGS
-# ==========================================
 @bot.listen("on_raw_message_delete")
 async def audit_message_delete(payload: discord.RawMessageDeleteEvent):
     channel = bot.get_channel(payload.channel_id)
@@ -2139,7 +2425,6 @@ async def audit_message_edit(payload: discord.RawMessageUpdateEvent):
     channel = bot.get_channel(payload.channel_id)
     if not channel or not getattr(channel, "guild", None):
         return
-    # Ignore edits generated by the bot itself to keep the audit room clean.
     author_id = None
     data = getattr(payload, "data", {}) or {}
     author = data.get("author") or {}
@@ -2164,9 +2449,6 @@ async def audit_message_edit(payload: discord.RawMessageUpdateEvent):
     )
 
 
-# ==========================================
-# 🔗 INVITE LOGS
-# ==========================================
 @bot.listen("on_invite_create")
 async def audit_invite_create(invite: discord.Invite):
     if not invite.guild:
@@ -2199,9 +2481,6 @@ async def audit_invite_delete(invite: discord.Invite):
         await refresh_invite_cache(invite.guild)
 
 
-# ==========================================
-# 😀 EMOJI / STICKER / SERVER LOGS
-# ==========================================
 @bot.listen("on_guild_emojis_update")
 async def audit_emojis_update(guild: discord.Guild, before, after):
     before_map = {e.id: e for e in before}
@@ -2251,13 +2530,7 @@ async def audit_guild_update(before: discord.Guild, after: discord.Guild):
         await send_audit_log(after, title="Server Updated", emoji=LOG_EMOJIS["server_update"], entry=entry, extra_fields=changed)
 
 
-# ==========================================
-# 🧾 END FULL SERVER LOGGING SYSTEM
-# ==========================================
 
-# ==========================================
-# MEMBER / SERVER PEAK TRACKING
-# ==========================================
 @bot.event
 async def on_member_join(member: discord.Member):
     update_peak_members(member.guild)
@@ -2267,9 +2540,6 @@ async def on_member_remove(member: discord.Member):
     update_peak_members(member.guild)
 
 
-# ==========================================
-# MUSIC / VOICE SYSTEM
-# ==========================================
 MUSIC_PLAYERS = {}
 
 
@@ -2301,9 +2571,9 @@ class MusicPlayer:
         self.current = None
         self.voice = None
         self.volume = 1.0
-        self.loop = "off"          # off, song, queue
+        self.loop = "off"
         self.autoplay = False
-        self.filter_name = "off"   # off, nightcore, bassboost
+        self.filter_name = "off"
         self.lock = asyncio.Lock()
 
     def filter_args(self):
@@ -2319,8 +2589,6 @@ class MusicPlayer:
         filter_args = self.filter_args()
         before = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 
-        # YouTube/CDN URLs sometimes require the same HTTP headers that
-        # yt-dlp used when extracting the media URL.
         headers = track.get("http_headers") or {}
         if headers:
             header_lines = "\r\n".join(
@@ -2331,15 +2599,11 @@ class MusicPlayer:
 
         options = f"-vn -ar 48000 -ac 2 -af volume={self.volume:.3f}"
         if filter_args:
-            # filter_args already starts with -af; append volume to the filter chain.
             filter_chain = filter_args[len("-af "):]
             options = f"-vn -ar 48000 -ac 2 -af {filter_chain},volume={self.volume:.3f}"
 
         executable = get_ffmpeg_executable()
 
-        # Use PCM output and let discord.py handle the Opus encoding.
-        # This avoids FFmpeg's libopus encoder crash (exit code -11) seen
-        # on some Railway environments.
         return discord.FFmpegPCMAudio(
             url,
             executable=executable,
@@ -2355,7 +2619,6 @@ def music_player(guild_id):
 
 
 def _extract_info(query):
-    # Keep extraction conservative: one audio result, no playlist download.
     options = dict(YTDL_OPTIONS)
     with yt_dlp.YoutubeDL(options) as ydl:
         info = ydl.extract_info(query, download=False)
@@ -2366,7 +2629,6 @@ def _extract_info(query):
 
         direct_url = info.get("url")
         if not direct_url:
-            # Some extractors expose formats instead of a top-level URL.
             formats = info.get("formats") or []
             audio_formats = [
                 f for f in formats
@@ -2446,7 +2708,6 @@ async def ensure_voice(interaction: Interaction):
             if vc.channel != target:
                 await vc.move_to(target)
         else:
-            # Explicit timeout + reconnect for Railway/cloud hosting.
             player.voice = await target.connect(timeout=30.0, reconnect=True)
 
         return player
@@ -2558,7 +2819,6 @@ async def play_next(guild_id):
 
 @bot.tree.command(name="join", description="Join your current voice channel")
 async def music_join(interaction: Interaction):
-    # MUST happen before any potentially slow Voice Gateway operation.
     await interaction.response.defer()
 
     player = await ensure_voice(interaction)
@@ -2600,7 +2860,6 @@ async def music_leave(interaction: Interaction):
 @bot.tree.command(name="play", description="Play YouTube or SoundCloud audio")
 @app_commands.describe(query="YouTube/SoundCloud URL or song name")
 async def music_play(interaction: Interaction, query: str):
-    # Defer FIRST. Both voice connection and yt-dlp can take several seconds.
     await interaction.response.defer()
 
     player = await ensure_voice(interaction)
@@ -2747,8 +3006,6 @@ async def music_volume(
     player = music_player(interaction.guild.id)
     player.volume = percent / 100
     vc = interaction.guild.voice_client
-    # FFmpeg applies volume when a new track starts.
-    # The current track is intentionally not restarted just to change volume.
     await interaction.response.send_message(
         f"🔊 Volume set to **{percent}%**."
     )
@@ -2829,9 +3086,6 @@ async def music_filter(interaction: Interaction, name: app_commands.Choice[str])
     )
 
 
-# ==========================================
-# 10. HELP CENTER
-# ==========================================
 HELP_CATEGORIES = {
     "🛡️ Moderation": [
         ("/warn", "Warn a member and store the warning."),
@@ -2993,9 +3247,6 @@ async def help_command(interaction: Interaction):
     await interaction.response.send_message(embed=embed, view=HelpView(), ephemeral=True)
 
 
-# ==========================================
-# 11. EXTRA MODERATION
-# ==========================================
 @bot.tree.command(name="warn", description="Warn a member")
 @app_commands.describe(user="Member to warn", reason="Reason")
 @is_owner_or_admin()
@@ -3100,9 +3351,6 @@ async def unlock(interaction: Interaction):
     await interaction.response.send_message("🔓 Channel unlocked.")
 
 
-# ==========================================
-# 12. COMMUNITY
-# ==========================================
 @bot.tree.command(name="poll", description="Create a community poll")
 @app_commands.describe(question="Question", option1="First option", option2="Second option")
 async def poll(interaction: Interaction, question: str, option1: str, option2: str):
@@ -3249,9 +3497,6 @@ async def serverinfo(interaction: Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-# ==========================================
-# 14. ECONOMY
-# ==========================================
 @bot.tree.command(name="balance", description="Check virtual Moon Coins")
 async def balance(interaction: Interaction, user: discord.Member = None):
     user = user or interaction.user
@@ -3329,9 +3574,6 @@ async def leaderboard(interaction: Interaction):
     )
 
 
-# ==========================================
-# 15. XP / LEVELS
-# ==========================================
 @bot.tree.command(name="rank", description="Show XP and level")
 async def rank(interaction: Interaction, user: discord.Member = None):
     user = user or interaction.user
@@ -3360,9 +3602,6 @@ async def leaderboardxp(interaction: Interaction):
     )
 
 
-# ==========================================
-# 16. GAMES
-# ==========================================
 @bot.tree.command(name="coinflip", description="Flip a virtual coin")
 async def coinflip(interaction: Interaction):
     await interaction.response.send_message(f"🪙 **{random.choice(['HEADS','TAILS'])}**")
@@ -3474,9 +3713,6 @@ async def blackjack(interaction: Interaction, amount: str):
     await interaction.response.send_message(f"🃏 Player `{p}` vs Dealer `{d}`\n{result}\n💰 `{wallet['coins']:,}`")
 
 
-# ==========================================
-# 🎮 GAMES CENTER — one panel for all games
-# ==========================================
 class BetModal(Modal):
     def __init__(self, game_name):
         self.game_name = game_name
@@ -3508,7 +3744,6 @@ class BetModal(Modal):
             else:
                 wallet["coins"] -= amount
                 text = f"🎰 **{number} • {color.upper()}** — 💀 Lost **{format_coins(amount)}**."
-                # 50/50 simple color bet is intentionally not exposed in this panel.
                 if random.random() < 0.5:
                     wallet["coins"] += amount * 2
                     text += "\n✨ Dark Night bonus win!"
@@ -3664,9 +3899,6 @@ async def vccenter(interaction: Interaction):
     await interaction.response.send_message(embed=make_temp_vc_embed(channel), view=TempVCControlView(), ephemeral=True)
 
 
-# ==========================================
-# 17. MAFIA
-# ==========================================
 class MafiaJoinView(View):
     def __init__(self, guild_id):
         super().__init__(timeout=300)
@@ -3743,9 +3975,6 @@ async def mafia(interaction: Interaction, action: app_commands.Choice[str]):
     await interaction.response.send_message("🔪 **Mafia started!** Secret roles were sent in DMs.")
 
 
-# ==========================================
-# 18. GIVEAWAYS
-# ==========================================
 @bot.tree.command(name="giveaway", description="Start a timed giveaway")
 @app_commands.describe(minutes="Duration", prize="Prize", winners="Winner count")
 @is_owner_or_admin()
@@ -3786,9 +4015,6 @@ async def giveaway_end(interaction: Interaction, message_id: str):
     await interaction.response.send_message("✅ Giveaway marked for ending. If it is still running, use its reaction list to pick a winner.", ephemeral=True)
 
 
-# ==========================================
-# 19. BIRTHDAYS
-# ==========================================
 @bot.tree.command(name="birthday", description="Set, view or remove your birthday")
 @app_commands.describe(action="set, view or remove", date="DD/MM when using set")
 @app_commands.choices(action=[
@@ -3813,9 +4039,6 @@ async def birthday(interaction: Interaction, action: app_commands.Choice[str], d
     await interaction.response.send_message(f"🎂 Birthday saved: **{date}**.", ephemeral=True)
 
 
-# ==========================================
-# 20. LISTENERS
-# ==========================================
 @bot.listen("on_message")
 async def moon_xp_listener(message: discord.Message):
     if message.author.bot or not message.guild:
@@ -3866,10 +4089,8 @@ async def moon_leave_listener(member: discord.Member):
 
 @bot.listen("on_voice_state_update")
 async def temporary_voice_listener(member, before, after):
-    # Create one private temporary room when a member enters the creator channel.
     if TEMP_VC_CHANNEL_ID and after.channel and after.channel.id == TEMP_VC_CHANNEL_ID:
         try:
-            # Reuse an existing room owned by the member instead of creating duplicates.
             existing_id = next((cid for cid, meta in TEMP_VC_META.items() if meta.get("owner") == member.id), None)
             if existing_id:
                 existing = member.guild.get_channel(existing_id)
@@ -3892,7 +4113,6 @@ async def temporary_voice_listener(member, before, after):
             }
             await member.move_to(channel, reason="Dark Night temporary VC")
 
-            # Discord supports text chat inside voice channels; send the control panel there.
             try:
                 await channel.send(embed=make_temp_vc_embed(channel), view=TempVCControlView())
             except (discord.Forbidden, discord.HTTPException):
@@ -3900,7 +4120,6 @@ async def temporary_voice_listener(member, before, after):
         except discord.HTTPException as exc:
             print(f"[TEMP VC] Create error: {exc!r}")
 
-    # Delete empty temporary rooms.
     if before.channel and before.channel.id in TEMP_VCS and len(before.channel.members) == 0:
         channel_id = before.channel.id
         TEMP_VCS.pop(channel_id, None)
@@ -3911,28 +4130,78 @@ async def temporary_voice_listener(member, before, after):
             pass
 
 
-# ==========================================
-# 🔊 TEMPORARY VC CONTROL CENTER
-# ==========================================
+
+VOICE_PANEL_IMAGE_URL = (
+    "https://cdn.discordapp.com/attachments/"
+    "1508515432834011160/1537230309756768256/"
+    "From_Klickpin.com-_696861742315861333-pin-id-696861742315861333.gif"
+    "?ex=6a9aa10a&is=6a994f8a&hm="
+    "f284e770e06dfdd96ca2588e63011f6d7febb3fc1a7f27d0b419dc0e18bf4668&"
+)
+
+VOICE_RULES_URL = (
+    "https://discord.com/channels/"
+    "1237973983882907739/1544405529613566044"
+)
+
+VOICE_NEED_HELP_URL = (
+    "https://discord.com/channels/"
+    "1237973983882907739/1544406090089893949"
+)
+
+
 def get_temp_vc_meta(channel):
     return TEMP_VC_META.get(getattr(channel, "id", 0))
 
+
+def find_owned_temp_vc(guild: discord.Guild, user_id: int):
+    """
+    Find the active temporary VC owned by this user.
+
+    This lets the control panel live in a normal text channel:
+    the buttons automatically target the owner's own temporary VC.
+    """
+    for channel_id, meta in list(TEMP_VC_META.items()):
+        if meta.get("owner") != user_id:
+            continue
+
+        channel = guild.get_channel(channel_id)
+
+        if isinstance(channel, discord.VoiceChannel):
+            return channel
+
+        TEMP_VCS.pop(channel_id, None)
+        TEMP_VC_META.pop(channel_id, None)
+
+    return None
+
+
 def can_manage_temp_vc(interaction, channel):
     meta = get_temp_vc_meta(channel)
+
     if not meta:
         return False
+
     return (
         interaction.user.id == OWNER_ID
         or interaction.user.guild_permissions.administrator
         or interaction.user.id == meta.get("owner")
     )
 
+
 def make_temp_vc_embed(channel):
     meta = get_temp_vc_meta(channel) or {}
     owner_id = meta.get("owner", 0)
-    owner = channel.guild.get_member(owner_id) if channel.guild else None
+
+    owner = (
+        channel.guild.get_member(owner_id)
+        if channel.guild
+        else None
+    )
+
     locked = meta.get("locked", False)
     limit = meta.get("limit", 0)
+
     embed = discord.Embed(
         title="🔊 Dark Night • Private Room Control",
         description=(
@@ -3945,163 +4214,800 @@ def make_temp_vc_embed(channel):
         ),
         color=EMBED_COLOR,
     )
+
     embed.set_thumbnail(url=COMMUNITY_IMAGE_URL)
+
     return embed
+
+
+def get_voice_panel_embed():
+    """
+    Main clean Dark Night voice panel.
+    The panel is intended to be posted in a normal text channel.
+    """
+    embed = discord.Embed(
+        title="୨୧ `Dark Night 🌙` Voice Panel",
+        description=(
+            "```ansi\n"
+            "Manage your room, adjust visibility, and control "
+            "voice features from one clean panel.\n"
+            "```\n"
+            "✧ [**__Check our rules here.__**](https://discord.com/channels/1237973983882907739/1544405529613566044)\n"
+            "✧ [**__For voice assistance, join a support voice channel.__**](https://discord.com/channels/1237973983882907739/1544406090089893949)\n"
+            "-# © 2025 **Dark Night 🌙**, Inc. All rights reserved. "
+            "Powered by @Omar ⛥."
+        ),
+        color=EMBED_COLOR,
+    )
+
+    embed.set_image(url=VOICE_PANEL_IMAGE_URL)
+
+    return embed
+
 
 class VCLimitModal(Modal):
     def __init__(self, channel):
         self.channel_id = channel.id
-        super().__init__(title="Set Voice Room Limit")
-        self.limit = TextInput(label="User limit", placeholder="0 = unlimited, max 99", max_length=2, required=True)
+
+        super().__init__(
+            title="Set Voice Room Limit"
+        )
+
+        self.limit = TextInput(
+            label="User limit",
+            placeholder="0 = unlimited, max 99",
+            max_length=2,
+            required=True,
+        )
+
         self.add_item(self.limit)
 
     async def on_submit(self, interaction: Interaction):
-        channel = interaction.guild.get_channel(self.channel_id)
-        if not isinstance(channel, discord.VoiceChannel) or not can_manage_temp_vc(interaction, channel):
-            return await interaction.response.send_message("❌ You cannot control this room.", ephemeral=True)
+        channel = interaction.guild.get_channel(
+            self.channel_id
+        )
+
+        if (
+            not isinstance(channel, discord.VoiceChannel)
+            or not can_manage_temp_vc(interaction, channel)
+        ):
+            return await interaction.response.send_message(
+                "❌ You cannot control this room.",
+                ephemeral=True,
+            )
+
         try:
             limit = int(self.limit.value)
         except ValueError:
-            return await interaction.response.send_message("❌ Enter a number from `0` to `99`.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Enter a number from `0` to `99`.",
+                ephemeral=True,
+            )
+
         if not 0 <= limit <= 99:
-            return await interaction.response.send_message("❌ Enter a number from `0` to `99`.", ephemeral=True)
-        await channel.edit(user_limit=limit, reason=f"Temp VC limit changed by {interaction.user}")
+            return await interaction.response.send_message(
+                "❌ Enter a number from `0` to `99`.",
+                ephemeral=True,
+            )
+
+        await channel.edit(
+            user_limit=limit,
+            reason=f"Temp VC limit changed by {interaction.user}",
+        )
+
         TEMP_VC_META[channel.id]["limit"] = limit
-        await interaction.response.edit_message(embed=make_temp_vc_embed(channel), view=TempVCControlView())
+
+        await interaction.response.send_message(
+            f"👥 Room limit set to **{'Unlimited' if limit == 0 else limit}**.",
+            ephemeral=True,
+        )
+
 
 class VCRenameModal(Modal):
     def __init__(self, channel):
         self.channel_id = channel.id
-        super().__init__(title="Rename Voice Room")
-        self.name = TextInput(label="Room name", placeholder="My Private Room", min_length=1, max_length=90, required=True)
+
+        super().__init__(
+            title="Rename Voice Room"
+        )
+
+        self.name = TextInput(
+            label="Room name",
+            placeholder="My Private Room",
+            min_length=1,
+            max_length=90,
+            required=True,
+        )
+
         self.add_item(self.name)
 
     async def on_submit(self, interaction: Interaction):
-        channel = interaction.guild.get_channel(self.channel_id)
-        if not isinstance(channel, discord.VoiceChannel) or not can_manage_temp_vc(interaction, channel):
-            return await interaction.response.send_message("❌ You cannot control this room.", ephemeral=True)
-        await channel.edit(name=self.name.value, reason=f"Temp VC renamed by {interaction.user}")
-        await interaction.response.edit_message(embed=make_temp_vc_embed(channel), view=TempVCControlView())
+        channel = interaction.guild.get_channel(
+            self.channel_id
+        )
+
+        if (
+            not isinstance(channel, discord.VoiceChannel)
+            or not can_manage_temp_vc(interaction, channel)
+        ):
+            return await interaction.response.send_message(
+                "❌ You cannot control this room.",
+                ephemeral=True,
+            )
+
+        await channel.edit(
+            name=self.name.value,
+            reason=f"Temp VC renamed by {interaction.user}",
+        )
+
+        await interaction.response.send_message(
+            f"✏️ Room renamed to **{channel.name}**.",
+            ephemeral=True,
+        )
+
 
 class VCKickModal(Modal):
     def __init__(self, channel):
         self.channel_id = channel.id
-        super().__init__(title="Remove Member From Room")
-        self.member_id = TextInput(label="Member ID", placeholder="Discord user ID", max_length=25, required=True)
+
+        super().__init__(
+            title="Remove Member From Room"
+        )
+
+        self.member_id = TextInput(
+            label="Member ID",
+            placeholder="Discord user ID",
+            max_length=25,
+            required=True,
+        )
+
         self.add_item(self.member_id)
 
     async def on_submit(self, interaction: Interaction):
-        channel = interaction.guild.get_channel(self.channel_id)
-        if not isinstance(channel, discord.VoiceChannel) or not can_manage_temp_vc(interaction, channel):
-            return await interaction.response.send_message("❌ You cannot control this room.", ephemeral=True)
+        channel = interaction.guild.get_channel(
+            self.channel_id
+        )
+
+        if (
+            not isinstance(channel, discord.VoiceChannel)
+            or not can_manage_temp_vc(interaction, channel)
+        ):
+            return await interaction.response.send_message(
+                "❌ You cannot control this room.",
+                ephemeral=True,
+            )
+
         try:
-            uid = int(self.member_id.value.strip())
+            uid = int(
+                self.member_id.value.strip()
+            )
         except ValueError:
-            return await interaction.response.send_message("❌ Invalid Discord user ID.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Invalid Discord user ID.",
+                ephemeral=True,
+            )
+
         member = interaction.guild.get_member(uid)
-        if not member or member.voice is None or member.voice.channel != channel:
-            return await interaction.response.send_message("❌ That member is not in this room.", ephemeral=True)
+
+        if (
+            not member
+            or member.voice is None
+            or member.voice.channel != channel
+        ):
+            return await interaction.response.send_message(
+                "❌ That member is not in this room.",
+                ephemeral=True,
+            )
+
         meta = get_temp_vc_meta(channel) or {}
-        if uid == meta.get("owner") and uid != interaction.user.id and interaction.user.id != OWNER_ID and not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("❌ The room owner cannot be removed by another member.", ephemeral=True)
-        await member.move_to(None, reason=f"Removed from temp VC by {interaction.user}")
-        await interaction.response.edit_message(embed=make_temp_vc_embed(channel), view=TempVCControlView())
+
+        if (
+            uid == meta.get("owner")
+            and uid != interaction.user.id
+            and interaction.user.id != OWNER_ID
+            and not interaction.user.guild_permissions.administrator
+        ):
+            return await interaction.response.send_message(
+                "❌ The room owner cannot be removed by another member.",
+                ephemeral=True,
+            )
+
+        await member.move_to(
+            None,
+            reason=f"Removed from temp VC by {interaction.user}",
+        )
+
+        await interaction.response.send_message(
+            f"👢 {member.mention} was removed from the room.",
+            ephemeral=True,
+        )
+
 
 class VCMoveModal(Modal):
     def __init__(self, channel):
         self.channel_id = channel.id
-        super().__init__(title="Move Member Into Room")
-        self.member_id = TextInput(label="Member ID", placeholder="Discord user ID", max_length=25, required=True)
+
+        super().__init__(
+            title="Move Member Into Room"
+        )
+
+        self.member_id = TextInput(
+            label="Member ID",
+            placeholder="Discord user ID",
+            max_length=25,
+            required=True,
+        )
+
         self.add_item(self.member_id)
 
     async def on_submit(self, interaction: Interaction):
-        channel = interaction.guild.get_channel(self.channel_id)
-        if not isinstance(channel, discord.VoiceChannel) or not can_manage_temp_vc(interaction, channel):
-            return await interaction.response.send_message("❌ You cannot control this room.", ephemeral=True)
+        channel = interaction.guild.get_channel(
+            self.channel_id
+        )
+
+        if (
+            not isinstance(channel, discord.VoiceChannel)
+            or not can_manage_temp_vc(interaction, channel)
+        ):
+            return await interaction.response.send_message(
+                "❌ You cannot control this room.",
+                ephemeral=True,
+            )
+
         try:
-            uid = int(self.member_id.value.strip())
+            uid = int(
+                self.member_id.value.strip()
+            )
         except ValueError:
-            return await interaction.response.send_message("❌ Invalid Discord user ID.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Invalid Discord user ID.",
+                ephemeral=True,
+            )
+
         member = interaction.guild.get_member(uid)
+
         if not member:
-            return await interaction.response.send_message("❌ Member not found.", ephemeral=True)
-        limit = get_temp_vc_meta(channel).get("limit", 0)
-        if limit and len(channel.members) >= limit and member.voice and member.voice.channel != channel:
-            return await interaction.response.send_message("❌ This room is full.", ephemeral=True)
-        await member.move_to(channel, reason=f"Moved into temp VC by {interaction.user}")
-        await interaction.response.edit_message(embed=make_temp_vc_embed(channel), view=TempVCControlView())
+            return await interaction.response.send_message(
+                "❌ Member not found.",
+                ephemeral=True,
+            )
+
+        limit = get_temp_vc_meta(channel).get(
+            "limit",
+            0,
+        )
+
+        if (
+            limit
+            and len(channel.members) >= limit
+            and member.voice
+            and member.voice.channel != channel
+        ):
+            return await interaction.response.send_message(
+                "❌ This room is full.",
+                ephemeral=True,
+            )
+
+        await member.move_to(
+            channel,
+            reason=f"Moved into temp VC by {interaction.user}",
+        )
+
+        await interaction.response.send_message(
+            f"↪️ {member.mention} moved into the room.",
+            ephemeral=True,
+        )
+
 
 class TempVCControlView(View):
+    """
+    This view can be used both:
+      1. inside an old VC-control message
+      2. from the new NORMAL TEXT CHANNEL voice panel.
+
+    From the text panel, the user's own temporary VC is found
+    automatically.
+    """
+
     def __init__(self):
         super().__init__(timeout=None)
 
     async def _check(self, interaction):
-        channel = interaction.channel
-        if not isinstance(channel, discord.VoiceChannel) or channel.id not in TEMP_VC_META:
-            await interaction.response.send_message("❌ This is not an active Dark Night temporary room.", ephemeral=True)
+        guild = interaction.guild
+
+        if guild is None:
+            await interaction.response.send_message(
+                "❌ This can only be used inside a server.",
+                ephemeral=True,
+            )
             return None
-        if not can_manage_temp_vc(interaction, channel):
-            await interaction.response.send_message("❌ Only the room owner or a server Owner/Admin can control this room.", ephemeral=True)
+
+        channel = None
+
+        if (
+            isinstance(interaction.channel, discord.VoiceChannel)
+            and interaction.channel.id in TEMP_VC_META
+        ):
+            channel = interaction.channel
+
+        if channel is None:
+            channel = find_owned_temp_vc(
+                guild,
+                interaction.user.id,
+            )
+
+        if channel is None:
+            if (
+                interaction.user.id == OWNER_ID
+                or interaction.user.guild_permissions.administrator
+            ):
+                active_rooms = [
+                    guild.get_channel(cid)
+                    for cid in TEMP_VC_META
+                ]
+                active_rooms = [
+                    c for c in active_rooms
+                    if isinstance(c, discord.VoiceChannel)
+                ]
+
+                if len(active_rooms) == 1:
+                    channel = active_rooms[0]
+
+        if channel is None:
+            await interaction.response.send_message(
+                "❌ You don't have an active temporary voice room.",
+                ephemeral=True,
+            )
             return None
+
+        if not can_manage_temp_vc(
+            interaction,
+            channel,
+        ):
+            await interaction.response.send_message(
+                "❌ Only the room owner or a server Owner/Admin can control this room.",
+                ephemeral=True,
+            )
+            return None
+
         return channel
 
-    @discord.ui.button(label="Lock", emoji="🔒", style=ButtonStyle.secondary, custom_id="tempvc_lock")
-    async def lock(self, interaction: Interaction, button: Button):
+    @discord.ui.button(
+        label="",
+        emoji="🔒",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_lock",
+    )
+    async def lock(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
         channel = await self._check(interaction)
-        if not channel: return
+
+        if not channel:
+            return
+
         meta = TEMP_VC_META[channel.id]
         meta["locked"] = True
+
         everyone = channel.guild.default_role
-        owner = channel.guild.get_member(meta["owner"])
-        await channel.set_permissions(everyone, connect=False, reason=f"Temp VC locked by {interaction.user}")
+        owner = channel.guild.get_member(
+            meta["owner"]
+        )
+
+        await channel.set_permissions(
+            everyone,
+            connect=False,
+            reason=f"Temp VC locked by {interaction.user}",
+        )
+
         if owner:
-            await channel.set_permissions(owner, connect=True, reason="Keep room owner connected")
-        await interaction.response.edit_message(embed=make_temp_vc_embed(channel), view=self)
+            await channel.set_permissions(
+                owner,
+                connect=True,
+                reason="Keep room owner connected",
+            )
 
-    @discord.ui.button(label="Unlock", emoji="🔓", style=ButtonStyle.success, custom_id="tempvc_unlock")
-    async def unlock(self, interaction: Interaction, button: Button):
+        await interaction.response.send_message(
+            "🔒 Room locked.",
+            ephemeral=True,
+        )
+
+    @discord.ui.button(
+        label="",
+        emoji="🔓",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_unlock",
+    )
+    async def unlock(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
         channel = await self._check(interaction)
-        if not channel: return
+
+        if not channel:
+            return
+
         TEMP_VC_META[channel.id]["locked"] = False
-        await channel.set_permissions(channel.guild.default_role, connect=None, reason=f"Temp VC unlocked by {interaction.user}")
-        await interaction.response.edit_message(embed=make_temp_vc_embed(channel), view=self)
 
-    @discord.ui.button(label="Limit", emoji="👥", style=ButtonStyle.primary, custom_id="tempvc_limit")
-    async def limit(self, interaction: Interaction, button: Button):
-        channel = await self._check(interaction)
-        if channel: await interaction.response.send_modal(VCLimitModal(channel))
+        await channel.set_permissions(
+            channel.guild.default_role,
+            connect=None,
+            reason=f"Temp VC unlocked by {interaction.user}",
+        )
 
-    @discord.ui.button(label="Rename", emoji="✏️", style=ButtonStyle.primary, custom_id="tempvc_rename")
-    async def rename(self, interaction: Interaction, button: Button):
-        channel = await self._check(interaction)
-        if channel: await interaction.response.send_modal(VCRenameModal(channel))
+        await interaction.response.send_message(
+            "🔓 Room unlocked.",
+            ephemeral=True,
+        )
 
-    @discord.ui.button(label="Kick", emoji="👢", style=ButtonStyle.danger, custom_id="tempvc_kick")
-    async def kick(self, interaction: Interaction, button: Button):
+    @discord.ui.button(
+        label="",
+        emoji="👥",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_limit",
+    )
+    async def limit(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
         channel = await self._check(interaction)
-        if channel: await interaction.response.send_modal(VCKickModal(channel))
 
-    @discord.ui.button(label="Move", emoji="↪️", style=ButtonStyle.secondary, custom_id="tempvc_move")
-    async def move(self, interaction: Interaction, button: Button):
-        channel = await self._check(interaction)
-        if channel: await interaction.response.send_modal(VCMoveModal(channel))
+        if channel:
+            await interaction.response.send_modal(
+                VCLimitModal(channel)
+            )
 
-    @discord.ui.button(label="Close Room", emoji="🗑️", style=ButtonStyle.danger, custom_id="tempvc_close")
-    async def close(self, interaction: Interaction, button: Button):
+    @discord.ui.button(
+        label="",
+        emoji="✏️",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_rename",
+    )
+    async def rename(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
         channel = await self._check(interaction)
-        if not channel: return
+
+        if channel:
+            await interaction.response.send_modal(
+                VCRenameModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="👢",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_kick",
+    )
+    async def kick(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._check(interaction)
+
+        if channel:
+            await interaction.response.send_modal(
+                VCKickModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="↪️",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_move",
+    )
+    async def move(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._check(interaction)
+
+        if channel:
+            await interaction.response.send_modal(
+                VCMoveModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="🗑️",
+        style=ButtonStyle.secondary,
+        custom_id="tempvc_close",
+    )
+    async def close(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._check(interaction)
+
+        if not channel:
+            return
+
         channel_id = channel.id
-        TEMP_VCS.pop(channel_id, None)
-        TEMP_VC_META.pop(channel_id, None)
-        await channel.delete(reason=f"Temp VC closed by {interaction.user}")
-        await interaction.response.send_message("🗑️ Temporary room closed.", ephemeral=True)
 
-# ==========================================
-# 🔊 VOICE ACTIVITY LOGS
-# ==========================================
+        TEMP_VCS.pop(
+            channel_id,
+            None,
+        )
+
+        TEMP_VC_META.pop(
+            channel_id,
+            None,
+        )
+
+        await channel.delete(
+            reason=f"Temp VC closed by {interaction.user}"
+        )
+
+        await interaction.response.send_message(
+            "🗑️ Temporary room closed.",
+            ephemeral=True,
+        )
+
+
+class VoicePanelView(View):
+    """
+    The Rules and Need Help links are now clickable markdown links
+    directly inside the embed text, so no extra link-button row is shown.
+    """
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+
+class VoicePanelControlView(View):
+    """
+    The actual room-control buttons.
+    They are emoji-only and intentionally use secondary buttons
+    so there are no bright blue/red/green blocks.
+    """
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def _control(self, interaction):
+        guild = interaction.guild
+
+        if guild is None:
+            await interaction.response.send_message(
+                "❌ This can only be used inside a server.",
+                ephemeral=True,
+            )
+            return None
+
+        channel = find_owned_temp_vc(
+            guild,
+            interaction.user.id,
+        )
+
+        if channel is None:
+            await interaction.response.send_message(
+                "❌ You don't have an active temporary voice room.",
+                ephemeral=True,
+            )
+            return None
+
+        if not can_manage_temp_vc(
+            interaction,
+            channel,
+        ):
+            await interaction.response.send_message(
+                "❌ You cannot control this room.",
+                ephemeral=True,
+            )
+            return None
+
+        return channel
+
+    @discord.ui.button(
+        label="",
+        emoji="🔒",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_lock",
+        row=0,
+    )
+    async def lock(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if not channel:
+            return
+
+        meta = TEMP_VC_META[channel.id]
+        meta["locked"] = True
+
+        everyone = channel.guild.default_role
+        owner = channel.guild.get_member(
+            meta["owner"]
+        )
+
+        await channel.set_permissions(
+            everyone,
+            connect=False,
+            reason=f"Temp VC locked by {interaction.user}",
+        )
+
+        if owner:
+            await channel.set_permissions(
+                owner,
+                connect=True,
+                reason="Keep room owner connected",
+            )
+
+        await interaction.response.send_message(
+            "🔒 Room locked.",
+            ephemeral=True,
+        )
+
+    @discord.ui.button(
+        label="",
+        emoji="🔓",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_unlock",
+        row=0,
+    )
+    async def unlock(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if not channel:
+            return
+
+        TEMP_VC_META[channel.id]["locked"] = False
+
+        await channel.set_permissions(
+            channel.guild.default_role,
+            connect=None,
+            reason=f"Temp VC unlocked by {interaction.user}",
+        )
+
+        await interaction.response.send_message(
+            "🔓 Room unlocked.",
+            ephemeral=True,
+        )
+
+    @discord.ui.button(
+        label="",
+        emoji="👥",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_limit",
+        row=0,
+    )
+    async def limit(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if channel:
+            await interaction.response.send_modal(
+                VCLimitModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="✏️",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_rename",
+        row=0,
+    )
+    async def rename(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if channel:
+            await interaction.response.send_modal(
+                VCRenameModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="👢",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_kick",
+        row=1,
+    )
+    async def kick(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if channel:
+            await interaction.response.send_modal(
+                VCKickModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="↪️",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_move",
+        row=1,
+    )
+    async def move(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if channel:
+            await interaction.response.send_modal(
+                VCMoveModal(channel)
+            )
+
+    @discord.ui.button(
+        label="",
+        emoji="🗑️",
+        style=ButtonStyle.secondary,
+        custom_id="voice_panel_close",
+        row=1,
+    )
+    async def close(
+        self,
+        interaction: Interaction,
+        button: Button,
+    ):
+        channel = await self._control(interaction)
+
+        if not channel:
+            return
+
+        channel_id = channel.id
+
+        TEMP_VCS.pop(
+            channel_id,
+            None,
+        )
+
+        TEMP_VC_META.pop(
+            channel_id,
+            None,
+        )
+
+        await channel.delete(
+            reason=f"Temp VC closed by {interaction.user}"
+        )
+
+        await interaction.response.send_message(
+            "🗑️ Temporary room closed.",
+            ephemeral=True,
+        )
+
+
+def make_full_voice_panel():
+    """
+    Returns the embed + the two emoji-only button rows.
+    """
+    return (
+        get_voice_panel_embed(),
+        VoicePanelView(),
+        VoicePanelControlView(),
+    )
+
+
 @bot.listen("on_voice_state_update")
 async def audit_voice_activity(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-    # Ignore pure mute/deaf changes from the general room spam unless a channel changed.
     if before.channel == after.channel:
         return
 
@@ -4129,9 +5035,6 @@ async def audit_voice_activity(member: discord.Member, before: discord.VoiceStat
     )
 
 
-# ==========================================
-# MASTER SLASH COMMAND TO SEND PANELS
-# ==========================================
 @bot.tree.command(name="send_panel", description="Send Dark Night embeds (Owner Only)")
 @app_commands.choices(panel=[
     app_commands.Choice(name="Socials", value="socials"),
@@ -4143,7 +5046,8 @@ async def audit_voice_activity(member: discord.Member, before: discord.VoiceStat
     app_commands.Choice(name="Self Roles", value="selfroles"),
     app_commands.Choice(name="Role Request Panel", value="rolerequest"),
     app_commands.Choice(name="Tweets System", value="tweets"),
-    app_commands.Choice(name="Games Center", value="games")
+    app_commands.Choice(name="Games Center", value="games"),
+    app_commands.Choice(name="Voice Room Panel", value="voice_room_panel")
 ])
 @is_owner_or_admin()
 async def send_panel(interaction: Interaction, panel: str):
@@ -4168,7 +5072,28 @@ async def send_panel(interaction: Interaction, panel: str):
     elif panel == "rolerequest":
         await interaction.channel.send(embed=get_role_request_embed(), view=RoleRequestView())
     elif panel == "tweets":
-        await interaction.channel.send(embed=get_tweet_panel_embed(), view=TweetPanelView())
+        panel_channel_id = TWEET_PANEL_CHANNELS.get(interaction.guild.id) if interaction.guild else None
+        if not panel_channel_id:
+            panel_channel_id = TWEET_PANEL_CHANNEL_ID
+
+        panel_channel = interaction.guild.get_channel(panel_channel_id) if interaction.guild else None
+
+        if not isinstance(panel_channel, discord.TextChannel):
+            panel_channel = interaction.channel if isinstance(interaction.channel, discord.TextChannel) else None
+
+        if not isinstance(panel_channel, discord.TextChannel):
+            return await interaction.followup.send(
+                f"❌ Tweet panel channel not found: `{panel_channel_id}`",
+                ephemeral=True,
+            )
+
+        await panel_channel.send(embed=get_tweet_panel_embed(), view=TweetPanelView())
+    elif panel == "voice_room_panel":
+        voice_embed, voice_links, voice_controls = make_full_voice_panel()
+        await interaction.channel.send(
+            embed=voice_embed,
+            view=voice_controls,
+        )
     elif panel == "games":
         await interaction.channel.send(embed=get_games_center_embed(), view=GamesCenterView())
 
