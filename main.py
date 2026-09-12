@@ -316,7 +316,15 @@ LINKS = {
 }
 
 XP_COOLDOWN = 45
-DATA_FILE = "moon_night_data.json"
+DATA_FILE = "grand_city_data.json"
+
+# GRAND CITY RP BOT PROFILE
+# Put grand_city_rp_avatar.png in the same folder as this Python file.
+BOT_AVATAR_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "grand_city_rp_avatar.png",
+)
+BOT_AVATAR_SET = False
 
 # MUSIC / VOICE SETTINGS
 YTDL_OPTIONS = {
@@ -5103,6 +5111,22 @@ async def send_panel(interaction: Interaction, panel: str):
 
 @bot.event
 async def on_ready():
+    global BOT_AVATAR_SET
+
+    # Set the bot profile picture to the Grand City RP logo once per process.
+    # The image file must be uploaded/deployed next to this Python file.
+    if not BOT_AVATAR_SET and bot.user:
+        try:
+            if os.path.isfile(BOT_AVATAR_FILE):
+                with open(BOT_AVATAR_FILE, "rb") as avatar_file:
+                    await bot.user.edit(avatar=avatar_file.read())
+                BOT_AVATAR_SET = True
+                print(f"[BOT AVATAR] Grand City RP avatar applied: {BOT_AVATAR_FILE}")
+            else:
+                print(f"[BOT AVATAR] Image not found: {BOT_AVATAR_FILE}")
+        except Exception as exc:
+            print(f"[BOT AVATAR] Failed to apply avatar: {exc!r}")
+
     for guild in bot.guilds:
         update_peak_members(guild)
         await refresh_invite_cache(guild)
