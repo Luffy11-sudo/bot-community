@@ -126,7 +126,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # OWNER / LOGGING / IMPORTANT CHANNELS
 OWNER_ID = int(os.getenv("OWNER_ID", "1547224802664783884"))
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "1543763368655978591"))
-GENERAL_LOG_CHANNEL_ID = int(os.getenv("GENERAL_LOG_CHANNEL_ID", "0"))
+GENERAL_LOG_CHANNEL_ID = int(os.getenv("GENERAL_LOG_CHANNEL_ID", "1543763368655978591"))
 APPLY_LOG_CHANNEL_ID = int(os.getenv("APPLY_LOG_CHANNEL_ID", str(LOG_CHANNEL_ID)))
 JAIL_ROLE_ID = int(os.getenv("JAIL_ROLE_ID", "0"))
 PROTECTED_ROLE_ID = int(os.getenv("PROTECTED_ROLE_ID", "0"))
@@ -1042,46 +1042,62 @@ class RoleRequestView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-        # Police / EMS / all gang roles stay together, including Lost MC.
-        police_ems_gangs = [
-            ("Mafia Boss", "mafia_boss", "👑"), ("Mafia Agent", "mafia_agent", "🕵️"),
-            ("Chief LSPD", "chief_lspd", "🚔"), ("LSPD", "lspd", "🚓"),
-            ("Chief Sheriff", "chief_sheriff", "⭐"), ("Sheriff", "sheriff", "🤠"),
-            ("Chief EMS", "chief_ems", "🚑"), ("EMS", "ems", "🩺"),
-            ("OG Gang", "og_gang", "💀"), ("Bloods", "bloods", "🔴"),
-            ("Ballas", "ballas", "🟣"), ("Families", "families", "🟢"),
-            ("Vagos", "vagos", "🟡"), ("Lost MC", "lost_mc", "🏍️"),
+        # Legal roles.
+        legal_roles = [
+            ("LSPD", "lspd", "🚓"),
+            ("Sheriff", "sheriff", "🤠"),
+            ("EMS", "ems", "🚑"),
+            ("Mechanic", "mechanic", "🔧"),
+            ("Car Dealer", "car_dealer", "🚗"),
+            ("Pizzeria", "pizzeria", "🍕"),
+            ("WhiteWidow", "whitewidow", "🌿"),
+            ("Cat Coffee", "cat_coffee", "🐈"),
         ]
-        # Keep Lost MC with the other Gang roles above.
-        businesses_other = [
-            ("Mechanic Manager", "mechanic_manager", "🔧"),
-            ("Car Dealer Manager", "car_dealer_manager", "🚘"), ("Car Dealer", "car_dealer", "🚗"),
-            ("Pizzeria Manager", "pizzeria_manager", "🍕"), ("Pizzeria", "pizzeria", "🍕"),
-            ("WhiteWidow Manager", "whitewidow_manager", "🌿"), ("WhiteWidow", "whitewidow", "🌱"),
-            ("Cat Coffee Manager", "cat_coffee_manager", "☕"), ("Cat Coffee", "cat_coffee", "🐈"),
-            ("Legal", "legal", "⚖️"), ("Illegal", "illegal", "🕶️"),
+
+        # Illegal roles.
+        illegal_roles = [
+            ("Mafia Agent", "mafia_agent", "🕵️"),
+            ("OG Gang", "og_gang", "💀"),
+            ("Bloods", "bloods", "🔴"),
+            ("Ballas", "ballas", "🟣"),
+            ("Families", "families", "🟢"),
+            ("Vagos", "vagos", "🟡"),
+            ("Lost MC", "lost_mc", "🏍️"),
+        ]
+
+        # Other Grand City RP roles.
+        other_roles = [
+            ("Legal", "legal", "⚖️"),
+            ("Illegal", "illegal", "🕶️"),
         ]
 
         self.add_item(GrandCityRoleSelect(
-            [discord.SelectOption(label=n, value=k, emoji=e) for n,k,e in police_ems_gangs],
-            "grandcity_role_select_1", "🚔 Police • EMS • Gangs"
+            [discord.SelectOption(label=n, value=k, emoji=e) for n,k,e in legal_roles],
+            "grandcity_role_select_legal", "⚖️ Legal"
         ))
         self.add_item(GrandCityRoleSelect(
-            [discord.SelectOption(label=n, value=k, emoji=e) for n,k,e in businesses_other],
-            "grandcity_role_select_2", "More Grand City RP roles"
+            [discord.SelectOption(label=n, value=k, emoji=e) for n,k,e in illegal_roles],
+            "grandcity_role_select_illegal", "🕶️ Illegal"
+        ))
+        self.add_item(GrandCityRoleSelect(
+            [discord.SelectOption(label=n, value=k, emoji=e) for n,k,e in other_roles],
+            "grandcity_role_select_other", "🔹 Other"
         ))
 
 def get_role_request_embed():
     embed = discord.Embed(
         title="୨୧ Grand City RP • Role Request",
         description=(
-            "## 🎭 Request your RP role\n"
-            "Choose the role that matches your position in Grand City RP.\n\n"
-            "📌 **Important:** Choosing a role sends a request to the staff team. "
-            "The role is **not** given automatically.\n\n"
-            "📝 You will be asked what you do, who you are with, and why you want the role.\n\n"
-            "### Available roles\n"
-            "🚔 LSPD / Sheriff / EMS • 💀 Gangs • 🔧 Businesses • ⚖️ Legal / Illegal\n\n"
+            "## 🎭 Request Your RP Role\n"
+            "Choose the role that best matches your position in Grand City RP.\n\n"
+            "📌 **Important:** Selecting a role sends a request to the staff team. "
+            "The role will not be assigned automatically.\n\n"
+            "📝 You may be asked about your activity, organization, and reason for requesting the role.\n\n"
+            "### Available Roles\n"
+            "🏢 Departments\n"
+            "💀 Gangs\n"
+            "🔧 Businesses\n"
+            "⚖️ Legal / Illegal\n\n"
             "-# © 2026 Grand City RP. All rights reserved."
         ), color=EMBED_COLOR
     )
